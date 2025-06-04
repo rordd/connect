@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>webOS Connect Device Feature Management (cp4/scrollfix/부분리렌더)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    .icon-btn { padding: 0.4rem 0.6rem; border-radius: 0.5rem; border: 1px solid #e5e7eb; background: white; cursor: pointer; display: flex; align-items: center; transition: background 0.1s; }
+    .icon-btn.selected { background: #2563eb; color: white; border-color: #2563eb; }
+    .section-title { font-size: 1rem; font-weight: bold; margin: 1.5rem 0 0.5rem 0; color: #2563eb; letter-spacing: 0.02em; }
+    .filters-panel { position: relative; }
+    .device-control-bar { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; background: #fff; border-radius: 0.75rem; box-shadow: 0 2px 8px #0001; border: 1px solid #e5e7eb; padding: 0.8rem 1.5rem 0.8rem 1.5rem; margin-bottom: 1.2rem; }
+    .side-panel-bg {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      z-index: 40; background: rgba(30,35,60,0.15);
+      display: flex; justify-content: flex-end; align-items: stretch;
+      transition: background 0.12s;
+    }
+    .side-panel {
+      background: #fff; 
+      width: 420px; min-width: 340px; max-width: 480px; 
+      height: 100vh;
+      box-shadow: -4px 0 32px #0002; 
+      z-index: 50;
+      border-radius: 1.2rem 0 0 1.2rem;
+      overflow-y: auto; position: relative;
+      display: flex; flex-direction: column;
+      transition: transform 0.18s cubic-bezier(.7,.2,.22,1);
+    }
+    @media (max-width: 900px) {
+      .side-panel { width: 100vw; min-width:0; max-width:100vw; border-radius: 1.2rem 1.2rem 0 0; height: 96vh; margin-top: 2.5vh; }
+      .side-panel-bg { align-items: flex-end; }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <nav class="flex items-center gap-4 bg-white px-4 py-3 shadow font-bold sticky top-0 z-10">
+    <div class="text-xl text-blue-600 font-black">webOS Connect</div>
+    <span class="ml-2 text-blue-600">Devices</span>
+  </nav>
+  <div class="w-full max-w-screen-xl mx-auto p-6">
+
+  
+    <div class="filters-panel bg-white rounded-xl shadow-md px-5 py-4 mb-4 border border-gray-200">
+      <div class="flex items-center cursor-pointer select-none" onclick="toggleFilters()">
+        <i data-lucide="chevron-down" class="w-6 h-6" id="filters-chevron"></i>
+        <span class="ml-2 text-lg font-bold">Filters</span>
+      </div>
+      <div id="filters-body">
+        <div class="chip-row flex flex-wrap gap-2 mt-4" id="chip-row"></div>
+      </div>
+    </div>
+    <div class="device-control-bar" id="controlBar"></div>
+    <div id="deviceListArea"></div>
+  </div>
+  <div id="sidePanelRoot"></div>
+  <script>
+    // ===== 자료구조/상태 =====
+    const platforms = [
+      { id: "webos-23", name: "webOS 23" },
+      { id: "webos-24", name: "webOS 24" }
+    ];
+    const devices = [
+      { id:"k8lp-1", name:"23 Nano", machine:"k8lp", manufactureYear:"2023", memory:"1.5GB", group:"NanoCell", platform:"webos-23" },
+      { id:"o22-1", name:"23 OLED", machine:"o22", manufactureYear:"2023", memory:"3.0GB", group:"OLED", platform:"webos-23" },
+      { id:"k8lp-2", name:"24 Nano", machine:"k8lp", manufactureYear:"2024", memory:"1.5GB", group:"NanoCell", platform:"webos-24" },
+      { id:"o22-2", name:"24 OLED", machine:"o22", manufactureYear:"2024", memory:"3.0GB", group:"OLED", platform:"webos-24" }
+    ];
+    const features = [
+      { id: "voice", name: "Voice Assistant", type: "toggle", description: "Enable or disable voice assistant feature.", options: [], category: "AI", defaultValue: false, required: false, country: ["KR", "US"], visible: true },
+      { id: "airplay", name: "Apple AirPlay", type: "toggle", description: "Enable Apple AirPlay support.", options: [], category: "Connectivity", defaultValue: false, required: false, country: ["US"], visible: true },
+      { id: "resolution", name: "Max Resolution", type: "select", description: "Select the maximum video output resolution.", options: ["1080p", "4K", "8K"], category: "Display", defaultValue: "4K", required: true, tier: ["Premium", "Standard"], visible: true },
+      { id: "kids_mode", name: "Kids Mode", type: "toggle", description: "Enable safe mode for kids.", options: [], category: "Parental", defaultValue: false, required: false, edition: ["Kids"], visible: true }
+    ];
+    const conditionKeys = [
+      { key: "country", label: "Country", values: ["KR","US","JP","EU"] },
+      { key: "tier", label: "Tier", values: ["Standard","Premium"] },
+      { key: "edition", label: "Edition", values: ["Basic","Kids","Pro"] }
+    ];
+    const deviceFeatureSettings = {
+      "k8lp-1": { "voice": { "enabled": true, conditions: [ { key: "country", op: "in", value: ["KR"], enabled: false } ] }, "airplay": { "enabled": false }, "resolution": { "enabled": true, "value": "4K" }, "kids_mode": { "enabled": true } },
+      "o22-1":  { "voice": { "enabled": false }, "airplay": { "enabled": true }, "resolution": { "enabled": true, "value": "8K" }, "kids_mode": { "enabled": false } }
+    };
+    let filters = { platform: "", group: "", manufactureYear: "", name: "" };
+    let visibleFilters = ["platform", "group", "manufactureYear", "name"];
+    let isAddingFilter = false;
+    let viewMode = "card";
+    let groupByKey = "";
+    let filtersFolded = false;
+    let sidePanelDeviceId = null;
+    let groupCollapseState = {};
+
+    // ===== 필터, 리스트, 컨트롤 함수 (동일) =====
+    function getUniqueOptions(key, filtered) {
+      return [...new Set((filtered || devices).map(d => d[key]))].filter(Boolean);
+    }
+    function applyFilters() {
+      let result = devices;
+      if (filters.platform) result = result.filter(d => d.platform === filters.platform);
+      ["group", "manufactureYear", "name", "machine", "memory"].forEach(fkey => {
+        if (filters[fkey]) result = result.filter(d => d[fkey] === filters[fkey]);
+      });
+      return result;
+    }
+    function getGroupLabel(key, value) {
+      if (!value) return "No Value";
+      if (key === "platform") return platforms.find(p=>p.id===value)?.name || value;
+      return value;
+    }
+    function render() {
+      renderFilterBar();
+      renderControlBar();
+      renderDeviceList();
+      renderSidePanel();
+      if (window.lucide) window.lucide.createIcons();
+    }
+    function renderFilterBar() {
+      const allFilterDefs = [
+        { key: "platform", label: "Platform" },
+        { key: "group", label: "Device Group" },
+        { key: "manufactureYear", label: "Year" },
+        { key: "name", label: "Device Name" },
+        { key: "machine", label: "Machine" },
+        { key: "memory", label: "Memory" }
+      ];
+      const row = document.getElementById("chip-row");
+      row.innerHTML =
+        visibleFilters.map(fkey => {
+          const def = allFilterDefs.find(f => f.key === fkey);
+          let source = devices;
+          if (fkey === "group") source = devices.filter(d => !filters.platform || d.platform === filters.platform);
+          if (fkey === "manufactureYear") source = devices.filter(d => (!filters.platform || d.platform === filters.platform) && (!filters.group || d.group === filters.group));
+          if (fkey === "name") source = devices.filter(d =>
+            (!filters.platform || d.platform === filters.platform)
+            && (!filters.group || d.group === filters.group)
+            && (!filters.manufactureYear || d.manufactureYear === filters.manufactureYear)
+          );
+          return `
+            <div class="flex items-center bg-white border border-gray-300 rounded-full px-3 py-2 gap-2"
+                 style="min-width:120px; max-width:330px;">
+              <label class="text-sm text-gray-700">${def.label}</label>
+              <select class="border-0 bg-white focus:ring-0 focus:outline-none px-1 py-0.5 text-base"
+                      onchange="filters['${fkey}']=this.value;render();">
+                <option value="">All</option>
+                ${getUniqueOptions(fkey, source).map(val=>`<option ${filters[fkey]===val?"selected":""}>${val}</option>`).join("")}
+              </select>
+              ${def.key === "platform" ? "" : `<button onclick="removeFilter('${fkey}');event.stopPropagation();" class="text-gray-400 hover:text-red-500 font-bold flex-shrink-0" title="Remove"><i data-lucide="x" class="w-4 h-4"></i></button>`}
+            </div>
+          `;
+        }).join("")
+        + `<div>
+          ${!isAddingFilter
+            ? `<button onclick="showFilterAdd();event.stopPropagation();" class="border rounded px-2 py-1 text-blue-600 bg-white">+Add filter</button>`
+            : renderAddFilterSelect()
+          }
+        </div>`;
+    }
+    function renderAddFilterSelect() {
+      const allFilterDefs = [
+        { key: "platform", label: "Platform" },
+        { key: "group", label: "Device Group" },
+        { key: "manufactureYear", label: "Year" },
+        { key: "name", label: "Device Name" },
+        { key: "machine", label: "Machine" },
+        { key: "memory", label: "Memory" }
+      ];
+      const unused = allFilterDefs.filter(f => !visibleFilters.includes(f.key));
+      return `
+        <select id="filterAddSel" class="border rounded px-2 py-1"
+                onchange="onAddFilter(this)">
+          <option value="">Select filter</option>
+          ${unused.map(f=>`<option value="${f.key}">${f.label}</option>`).join("")}
+        </select>
+        <button onclick="cancelAddFilter();event.stopPropagation();" class="ml-1 px-2 text-gray-400 hover:text-red-500">&times;</button>
+      `;
+    }
+    function showFilterAdd() {
+      isAddingFilter = true;
+      render();
+      setTimeout(()=>{
+        const sel = document.getElementById("filterAddSel");
+        if(sel) sel.focus();
+      }, 10);
+    }
+    function cancelAddFilter() {
+      isAddingFilter = false;
+      render();
+    }
+    function onAddFilter(sel) {
+      if (sel.value) {
+        visibleFilters.push(sel.value);
+        filters[sel.value] = "";
+        isAddingFilter = false;
+        render();
+      }
+    }
+    function removeFilter(fkey) {
+      visibleFilters = visibleFilters.filter(k => k !== fkey);
+      delete filters[fkey];
+      render();
+    }
+    function toggleFilters() {
+      filtersFolded = !filtersFolded;
+      document.getElementById('filters-body').style.display = filtersFolded ? 'none' : 'block';
+      document.getElementById('filters-chevron').setAttribute('data-lucide', filtersFolded ? 'chevron-right' : 'chevron-down');
+      if(window.lucide) window.lucide.createIcons();
+    }
+    function renderControlBar() {
+      const allFilterDefs = [
+        { key: "platform", label: "Platform" },
+        { key: "group", label: "Device Group" },
+        { key: "manufactureYear", label: "Year" },
+        { key: "name", label: "Device Name" },
+        { key: "machine", label: "Machine" },
+        { key: "memory", label: "Memory" }
+      ];
+      const bar = document.getElementById("controlBar");
+      bar.innerHTML = `
+        <div class="flex items-center gap-3">
+          <label class="text-gray-700 text-sm font-semibold">Group By</label>
+          <select class="border rounded px-2 py-1" onchange="groupByKey=this.value;render();">
+            <option value="">None</option>
+            ${allFilterDefs.map(f=>`<option value="${f.key}" ${groupByKey===f.key?"selected":""}>${f.label}</option>`).join("")}
+          </select>
+        </div>
+        <div class="flex items-center gap-1 justify-end">
+          <button class="icon-btn ${viewMode==="card"?"selected":""}" onclick="viewMode='card';render();" title="Card view">
+            <i data-lucide="layout-grid" class="w-5 h-5"></i>
+          </button>
+          <button class="icon-btn ${viewMode==="list"?"selected":""}" onclick="viewMode='list';render();" title="List view">
+            <i data-lucide="list" class="w-5 h-5"></i>
+          </button>
+        </div>
+      `;
+    }
+    
+function renderDeviceList() {
+  const area = document.getElementById("deviceListArea");
+  const filtered = applyFilters();
+  let groups = {};
+  if (groupByKey) {
+    for (const d of filtered) {
+      const v = d[groupByKey] || "No Value";
+      if (!groups[v]) groups[v] = [];
+      groups[v].push(d);
+    }
+  } else {
+    groups["All Devices"] = filtered;
+  }
+  let listHtml = "";
+  if (viewMode === "card") {
+    listHtml = Object.entries(groups).map(([g, list]) => `
+      <div>
+        ${groupByKey ? `
+          <div class="section-title mx-auto cursor-pointer select-none flex items-center gap-2" style="max-width:32rem"
+               onclick="toggleGroupCollapse('${g.replace(/'/g,"\\'")}')">
+            <i data-lucide="${groupCollapseState[g] ? 'chevron-right' : 'chevron-down'}" class="w-6 h-6"></i>
+            <span>${getGroupLabel(groupByKey, g)}</span>
+            <span class="text-xs text-gray-400 ml-2">${list.length} devices</span>
+          </div>
+        ` : ""}
+        <div ${groupCollapseState[g] ? 'style="display:none;"' : ''}>
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          ${list.length ? list.map(d=>`
+            <div class="bg-white rounded-xl shadow-md p-5 w-full flex flex-col gap-2 hover:ring-2 ring-blue-200 transition cursor-pointer"
+              onclick="showDeviceFeatures('${d.id}')">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-lg font-bold">${d.name}</span>
+                <span class="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded">${d.group}</span>
+              </div>
+              <div class="flex items-center gap-3 text-sm text-gray-500 mb-1">
+                <span class="inline-flex items-center gap-1">
+                  <i data-lucide="calendar" class="w-4 h-4"></i>${d.manufactureYear}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <i data-lucide="server" class="w-4 h-4"></i>${platforms.find(p=>p.id===d.platform)?.name || d.platform}
+                </span>
+              </div>
+              <div class="flex gap-3 text-xs text-gray-400 mt-1">
+                <span class="inline-flex items-center gap-1">
+                  <i data-lucide="cpu" class="w-4 h-4"></i>${d.machine}
+                </span>
+                <span class="inline-flex items-center gap-1">
+                  <i data-lucide="memory-stick" class="w-4 h-4"></i>${d.memory}
+                </span>
+              </div>
+            </div>
+          `).join("") : `<div class="text-gray-400">No device found.</div>`}
+          </div>
+        </div>
+      </div>
+    `).join("");
+  } else {
+    listHtml = Object.entries(groups).map(([g, list]) => `
+      <div>
+        ${groupByKey ? `
+          <div class="section-title cursor-pointer select-none flex items-center gap-2"
+               onclick="toggleGroupCollapse('${g.replace(/'/g,"\\'")}')">
+            <i data-lucide="${groupCollapseState[g] ? 'chevron-right' : 'chevron-down'}" class="w-6 h-6"></i>
+            <span>${getGroupLabel(groupByKey, g)}</span>
+            <span class="text-xs text-gray-400 ml-2">${list.length} devices</span>
+          </div>
+        ` : ""}
+        <div ${groupCollapseState[g] ? 'style="display:none;"' : ''}>
+          <table class="w-full bg-white rounded shadow text-sm mb-6">
+            <thead>
+              <tr class="bg-gray-100 text-left">
+                <th class="py-2 px-3">Name</th>
+                <th>Platform</th>
+                <th>Group</th>
+                <th>Year</th>
+                <th>Machine</th>
+                <th>Memory</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${list.length ? list.map(d=>`
+                <tr class="cursor-pointer hover:bg-blue-50" onclick="showDeviceFeatures('${d.id}')">
+                  <td class="py-1 px-3 font-bold">${d.name}</td>
+                  <td>${platforms.find(p=>p.id===d.platform)?.name || d.platform}</td>
+                  <td>${d.group}</td>
+                  <td>${d.manufactureYear}</td>
+                  <td>${d.machine}</td>
+                  <td>${d.memory}</td>
+                </tr>
+              `).join("") : `<tr><td colspan="6" class="text-gray-400">No device found.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `).join("");
+  }
+  area.innerHTML = listHtml;
+  if(window.lucide) window.lucide.createIcons();
+}
+    
+function toggleGroupCollapse(g) {
+  groupCollapseState[g] = !groupCollapseState[g];
+  renderDeviceList();
+}
+    // ===== 사이드패널: 헤더/레이아웃 고정, 피처리스트만 별도 렌더 =====
+    function showDeviceFeatures(deviceId) {
+      sidePanelDeviceId = deviceId;
+      renderSidePanel(); // 최초 전체 패널 렌더
+      document.addEventListener("keydown", escPanelClose, { once: true });
+    }
+    function escPanelClose(e) {
+      if (e.key === "Escape") closeSidePanel();
+    }
+    function closeSidePanel() {
+      sidePanelDeviceId = null;
+      renderSidePanel();
+    }
+
+    // 전체 패널 구조(헤더, 리스트 컨테이너)
+    function renderSidePanel() {
+      const root = document.getElementById("sidePanelRoot");
+      if (!sidePanelDeviceId) { root.innerHTML = ""; return; }
+      const d = devices.find(d=>d.id===sidePanelDeviceId);
+      if (!d) { root.innerHTML=""; return; }
+      root.innerHTML = `
+        <div class="side-panel-bg" onclick="if(event.target===this)closeSidePanel()">
+          <div class="side-panel animate-fadeInRight">
+            <div class="flex items-center justify-between px-4 py-4 border-b">
+              <div>
+                <div class="text-xl font-black text-blue-700 mb-0.5">${d.name}</div>
+                <div class="text-xs text-gray-500">${d.group} • ${d.manufactureYear} • ${d.machine}</div>
+              </div>
+              <button onclick="closeSidePanel()" class="icon-btn ml-2"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div id="featureListScroll" class="flex-1 px-4 py-2 overflow-y-auto" style="max-height:78vh;">
+              <!-- feature list -->
+            </div>
+          </div>
+        </div>
+      `;
+      renderFeatureListOnly(); // 내부 리스트만 그리기
+      if(window.lucide) window.lucide.createIcons();
+    }
+
+    // ==== 피처리스트만 부분적으로 갱신(스크롤 복원) ====
+    function renderFeatureListOnly() {
+      const root = document.getElementById("sidePanelRoot");
+      const scrollDiv = root.querySelector('#featureListScroll');
+      if (!sidePanelDeviceId || !scrollDiv) return;
+      const d = devices.find(d=>d.id===sidePanelDeviceId);
+      const devSettings = deviceFeatureSettings[d.id] || {};
+      let filteredFeatures = features;
+
+      // (1) 스크롤 위치 기억
+      let prevScroll = scrollDiv.scrollTop;
+
+      // (2) 리스트 내용 렌더
+      scrollDiv.innerHTML = `
+        <div class="font-semibold text-lg text-gray-800 mb-2">Features</div>
+        ${filteredFeatures.map(f=>{
+          const st = devSettings[f.id] || {};
+          let enabled = st.enabled ?? f.defaultValue ?? false;
+          let value = st.value ?? f.defaultValue ?? null;
+          let control = "";
+          if(f.type==="toggle") {
+            control = `
+              <div class="flex items-center gap-3 mb-2">
+                <span class="font-medium text-sm text-gray-700">Default:</span>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" class="accent-blue-600 scale-125"
+                    ${enabled ? "checked" : ""} onchange="toggleFeature('${d.id}','${f.id}',this.checked)">
+                  <span class="text-base">${enabled?"On":"Off"}</span>
+                </label>
+              </div>
+            `;
+          } else if(f.type==="select" && Array.isArray(f.options)) {
+            control = `
+              <div class="flex items-center gap-3 mb-2">
+                <span class="font-medium text-sm text-gray-700">Default:</span>
+                <select class="border rounded px-2 py-1 ml-2"
+                  onchange="updateFeatureValue('${d.id}','${f.id}',this.value)">
+                  ${f.options.map(opt=>`<option value="${opt}" ${value===opt?"selected":""}>${opt}</option>`).join("")}
+                </select>
+              </div>
+            `;
+          } else {
+            control = `<span class="text-gray-400">Not editable</span>`;
+          }
+          // ---- Condition(OR/우선순위) ----
+          let conds = st.conditions || [];
+          let condHtml = "";
+          if (!conds.length) {
+            condHtml = `<div class="text-xs text-gray-400 italic mb-2">No conditions (All)</div>`;
+          } else {
+            condHtml = conds.map((cond,i)=>{
+              let keyOptions = conditionKeys.map(ck=>`<option value="${ck.key}" ${cond.key===ck.key?"selected":""}>${ck.label}</option>`).join("");
+              let opOptions = `<option value="in" ${cond.op==="in"?"selected":""}>in</option><option value="eq" ${cond.op==="eq"?"selected":""}>=</option><option value="ne" ${cond.op==="ne"?"selected":""}>&ne;</option>`;
+              let valInput = "";
+              let thisKey = conditionKeys.find(k=>k.key===cond.key);
+              
+          if(thisKey) {
+                if(cond.op==="in" || cond.op==="not-in") {
+                  valInput = `<div class="flex flex-wrap gap-2">
+                    ${thisKey.values.map(v=>`
+                      <label class="inline-flex items-center gap-1">
+                        <input type="checkbox" value="${v}" ${Array.isArray(cond.value)&&cond.value.includes(v)?"checked":""}
+              onchange="onCondValueCheck('${d.id}','${f.id}',${i},'${v}',this.checked)">
+                        ${v}
+                      </label>
+                    `).join("")}
+                  </div>`;
+                } else {
+                  valInput = `<select class="border rounded px-1 py-0.5"
+              onchange="updateConditionValue('${d.id}','${f.id}',${i},this.value)">
+                    <option value="">-</option>
+                    ${thisKey.values.map(v=>
+                      `<option value="${v}" ${cond.value===v?"selected":""}>${v}</option>`
+                    ).join("")}
+                  </select>`;
+                }
+              }
+                              
+              else {
+                valInput = `<input class="border rounded px-1 py-0.5 w-20" value="${cond.value||""}"
+                  onchange="updateConditionValue('${d.id}','${f.id}',${i},this.value)"/>`;
+              }
+              let overrideInput = "";
+              if(f.type==="toggle") {
+                overrideInput = `
+                  <input type="checkbox" class="accent-blue-600 scale-125"
+                    ${cond.enabled===false?"":"checked"}
+                    onchange="updateConditionOverride('${d.id}','${f.id}',${i},this.checked)">
+                  <span class="ml-1">${cond.enabled===false?"Off":"On"}</span>
+                `;
+              } else if(f.type==="select" && Array.isArray(f.options)) {
+                overrideInput = `
+                  <select class="border rounded px-1 py-0.5"
+                    onchange="updateConditionOverride('${d.id}','${f.id}',${i},this.value)">
+                    ${f.options.map(opt=>
+                      `<option value="${opt}" ${cond.overrideValue===opt?"selected":""}>${opt}</option>`
+                    ).join("")}
+                  </select>
+                `;
+              }
+              return `<div class="flex items-center gap-2 mb-1">
+                <select class="border rounded px-1 py-0.5"
+                  onchange="updateConditionKey('${d.id}','${f.id}',${i},this.value)">
+                  ${keyOptions}
+                </select>
+                <select class="border rounded px-1 py-0.5"
+                  onchange="updateConditionOp('${d.id}','${f.id}',${i},this.value)">
+                  ${opOptions}
+                </select>
+                ${valInput}
+                ${overrideInput}
+                <button onclick="removeCondition('${d.id}','${f.id}',${i})"
+                  class="text-gray-400 hover:text-red-500 px-2 font-bold" title="Remove">&times;</button>
+              </div>`;
+            }).join("");
+          }
+          condHtml += `<button class="border rounded px-2 py-1 text-xs text-blue-700 bg-blue-50 mt-2"
+            onclick="addCondition('${d.id}','${f.id}')">+ Add Condition</button>`;
+          return `
+            <div class="flex flex-col border-b py-3">
+              <div class="flex items-center justify-between mb-1">
+                <div>
+                  <div class="font-semibold text-gray-700">${f.name}</div>
+                  <div class="text-xs text-gray-400">${f.description||""}</div>
+                </div>
+              </div>
+              <div class="ml-2 mt-1">${control}</div>
+              <div class="ml-2 mt-2">
+                <div class="font-normal text-xs text-gray-600 mb-1">Condition-based overrides (OR, first match wins)</div>
+                ${condHtml}
+              </div>
+            </div>
+          `;
+        }).join("")}
+      `;
+
+      // (3) 스크롤 복원
+      setTimeout(() => {
+        scrollDiv.scrollTop = prevScroll;
+      }, 0);
+
+      if(window.lucide) window.lucide.createIcons();
+    }
+  function onCondValueCheck(deviceId, featureId, idx, val, checked) {
+        let cond = deviceFeatureSettings[deviceId]?.[featureId]?.conditions?.[idx];
+        if(!cond) return;
+        if(!Array.isArray(cond.value)) cond.value = [];
+        if(checked) {
+          if(!cond.value.includes(val)) cond.value.push(val);
+        } else {
+          cond.value = cond.value.filter(v=>v!==val);
+        }
+        renderFeatureListOnly();
+      }
+window.onCondValueCheck = onCondValueCheck;
+    // ===== 피처 override/조건/기본값 변경 함수 (부분 리렌더만 호출) =====
+    function addCondition(deviceId, featureId) {
+      if(!deviceFeatureSettings[deviceId]) deviceFeatureSettings[deviceId]={};
+      if(!deviceFeatureSettings[deviceId][featureId]) deviceFeatureSettings[deviceId][featureId]={enabled:true, conditions:[]};
+      if(!Array.isArray(deviceFeatureSettings[deviceId][featureId].conditions)) deviceFeatureSettings[deviceId][featureId].conditions=[];
+      deviceFeatureSettings[deviceId][featureId].conditions.push({key:"country",op:"in",value:["KR"],enabled:true});
+      renderFeatureListOnly();
+    }
+    function removeCondition(deviceId, featureId, idx) {
+      let conds = deviceFeatureSettings[deviceId]?.[featureId]?.conditions;
+      if(!conds) return;
+      conds.splice(idx,1);
+      renderFeatureListOnly();
+    }
+    function updateConditionKey(deviceId, featureId, idx, key) {
+      let cond = deviceFeatureSettings[deviceId]?.[featureId]?.conditions?.[idx];
+      if(!cond) return;
+      cond.key = key;
+      cond.value = conditionKeys.find(ck=>ck.key===key)?.values?.[0] || "";
+      renderFeatureListOnly();
+    }
+    function updateConditionOp(deviceId, featureId, idx, op) {
+      let cond = deviceFeatureSettings[deviceId]?.[featureId]?.conditions?.[idx];
+      if(!cond) return;
+      cond.op = op;
+      cond.value = op==="in" ? [conditionKeys.find(ck=>ck.key===cond.key)?.values?.[0]||""] : conditionKeys.find(ck=>ck.key===cond.key)?.values?.[0]||"";
+      renderFeatureListOnly();
+    }
+    function updateConditionValue(deviceId, featureId, idx, value) {
+      let cond = deviceFeatureSettings[deviceId]?.[featureId]?.conditions?.[idx];
+      if(!cond) return;
+      cond.value = value;
+      renderFeatureListOnly();
+    }
+    function updateConditionOverride(deviceId, featureId, idx, value) {
+      let cond = deviceFeatureSettings[deviceId]?.[featureId]?.conditions?.[idx];
+      if(!cond) return;
+      if (typeof value === "boolean") cond.enabled = value;
+      else cond.overrideValue = value;
+      renderFeatureListOnly();
+    }
+    function toggleFeature(deviceId, featureId, isEnabled) {
+      if(!deviceFeatureSettings[deviceId]) deviceFeatureSettings[deviceId] = {};
+      if(!deviceFeatureSettings[deviceId][featureId]) deviceFeatureSettings[deviceId][featureId] = {};
+      deviceFeatureSettings[deviceId][featureId].enabled = isEnabled;
+      renderFeatureListOnly();
+    }
+    function updateFeatureValue(deviceId, featureId, value) {
+      if(!deviceFeatureSettings[deviceId]) deviceFeatureSettings[deviceId] = {};
+      if(!deviceFeatureSettings[deviceId][featureId]) deviceFeatureSettings[deviceId][featureId] = { enabled: true };
+      deviceFeatureSettings[deviceId][featureId].value = value;
+      renderFeatureListOnly();
+    }
+
+    // ===== 바인딩 및 마무리 =====
+    window.render = render;
+    window.showFilterAdd = showFilterAdd;
+    window.cancelAddFilter = cancelAddFilter;
+    window.onAddFilter = onAddFilter;
+    window.removeFilter = removeFilter;
+    window.toggleFilters = toggleFilters;
+    window.showDeviceFeatures = showDeviceFeatures;
+    window.closeSidePanel = closeSidePanel;
+    window.toggleFeature = toggleFeature;
+    window.updateFeatureValue = updateFeatureValue;
+    window.addCondition = addCondition;
+    window.removeCondition = removeCondition;
+    window.updateConditionKey = updateConditionKey;
+    window.updateConditionOp = updateConditionOp;
+    window.updateConditionValue = updateConditionValue;
+    window.updateConditionOverride = updateConditionOverride;
+
+    render();
+  </script>
+  <script>window.lucide && window.lucide.createIcons();</script>
+</body>
+</html>
