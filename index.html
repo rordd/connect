@@ -10,8 +10,14 @@ input, select, textarea {
   border: 1.5px solid #999 !important;
   color: #111111 !important;
   font-weight: 550 !important;
-  font-size: 14px !important;
+  font-size: 15px !important;
 }
+select option {
+  font-weight: 550 !important;
+  color: #1a2238 !important;
+  font-size: 15px !important;
+}
+
 input:focus, select:focus, textarea:focus {
   outline: 2px solid #2563eb;
   border-color: #2563eb;
@@ -72,7 +78,7 @@ body {
         <div class="bg-gradient-to-r from-red-400 from-red-300 border-b border-gray-200 shadow-sm p-1 my-2 flex flex-wrap gap-3 items-center sticky top-0 z-20" id="filter-bar">
         <div class="flex flex-wrap gap-2 items-center" id="filters">
           <div class="relative overflow-visible z-50" id="add-filter-dropdown">
-            <button class="px-4 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg shadow hover:bg-blue-700 transition" onclick="toggleFilterMenu()">More</button>
+            <button class="px-4 py-1.5 bg-blue-600 text-white text-base font-semibold rounded-lg shadow hover:bg-blue-700 transition" onclick="toggleFilterMenu()">More</button>
             <div class="absolute right-0 mt-1 w-48 bg-white border border-gray-400 rounded shadow-lg hidden z-50" id="filter-menu"></div>
           </div>
         </div>
@@ -102,7 +108,7 @@ body {
 </div>
           
           
-          <div class="text-sm text-gray-600" id="strategy-editor"></div>
+          <div class="text-base text-gray-600" id="strategy-editor"></div>
         </section>
         <section class="w-1/3 p-6 overflow-y-auto bg-white h-[calc(108vh-12rem)]">
           <h2 class="text-xl font-semibold mb-4">Preview</h2>
@@ -578,8 +584,8 @@ function renderFeatures() {
         <h3 class='text-lg font-semibold'>${f.name}</h3>
         ${toggle}
       </div>
-      <p class='text-sm text-gray-500 mt-1'>Default Values</p>
-      <div class='mt-3 text-sm text-gray-600 space-x-1'>${tagHTML}</div>
+      <p class='text-base text-gray-500 mt-1'>Default Values</p>
+      <div class='mt-3 text-base text-gray-600 space-x-1'>${tagHTML}</div>
     `;
 
     container.appendChild(card);
@@ -654,7 +660,7 @@ function renderFilterMenu() {
   unused.forEach(f => {
     const btn = document.createElement("button");
     btn.textContent = f.title;
-    btn.className = "w-full text-left px-4 py-2 text-sm text-gray-800 hover:bg-[#26314f]";
+    btn.className = "w-full text-left px-4 py-2 text-base text-gray-800 hover:bg-[#26314f]";
     btn.onclick = () => {
       currentFilters[f.key] = undefined;
       menu.classList.add("hidden");
@@ -705,7 +711,7 @@ if (cond.op === "!=") return String(filterValue) !== String(cond.value);
 function renderPrettyObject(obj) {
   if (!obj || typeof obj !== 'object') return '';
   return `
-    <table class="min-w-[180px] bg-white border border-gray-300 rounded shadow-sm text-sm mb-2">
+    <table class="min-w-[180px] bg-white border border-gray-300 rounded shadow-sm text-base mb-2">
       <tbody>
       ${Object.entries(obj).map(([k, v]) => `
         <tr>
@@ -806,12 +812,12 @@ if (!feature.strategies) feature.strategies = [];
 // 라벨(선택적)
 const envLabel = document.createElement("span");
 envLabel.textContent = "Environment";
-envLabel.className = "mr-2 text-sm font-semibold text-blue-700";
+envLabel.className = "mr-2 text-base font-semibold text-blue-700";
 envBar.appendChild(envLabel);
 
 // 셀렉트박스
 const envSelector = document.createElement("select");
-envSelector.className = "px-2 py-1 border rounded bg-blue-50 text-blue-900 font-semibold text-sm";
+envSelector.className = "px-2 py-1 border rounded bg-blue-50 text-blue-900 font-semibold text-base";
 environmentNames.forEach(env => {
   const opt = document.createElement("option");
   opt.value = env;
@@ -828,11 +834,11 @@ envBar.appendChild(envSelector);
 
 const applyModeLabel = document.createElement("span");
 applyModeLabel.textContent = "Deploy";
-applyModeLabel.className = "ml-6 mr-2 text-sm font-semibold text-blue-700";
+applyModeLabel.className = "ml-6 mr-2 text-base font-semibold text-blue-700";
 envBar.appendChild(applyModeLabel);
 
 const applyModeSelect = document.createElement("select");
-applyModeSelect.className = "px-2 py-1 border rounded bg-blue-50 text-blue-900 font-semibold text-sm";
+applyModeSelect.className = "px-2 py-1 border rounded bg-blue-50 text-blue-900 font-semibold text-base";
 
 ["build", "remote", "both"].forEach(mode => {
   const opt = document.createElement("option");
@@ -860,7 +866,7 @@ editor.appendChild(envBar);
   title.className = "text-base font-semibold text-black";
   title.innerText = "Default Settings";
   const toggleBtn = document.createElement("button");
-  toggleBtn.className = "text-sm border px-2 py-1 rounded";
+  toggleBtn.className = "text-base border px-2 py-1 rounded";
   toggleBtn.innerHTML = "📂";
   let form = document.createElement("form");
   form.className = "space-y-4" + (defaultSettingsOpen ? "" : " hidden");;
@@ -933,7 +939,7 @@ editor.appendChild(envBar);
   titleText.textContent = "Feature Strategies";
   const collapseBtn = document.createElement("button");
   collapseBtn.innerHTML = "📂";
-  collapseBtn.className = "text-sm px-2 py-1 border rounded whitespace-nowrap";
+  collapseBtn.className = "text-base px-2 py-1 border rounded whitespace-nowrap";
   strategyTitle.appendChild(titleText);
   strategyTitle.appendChild(collapseBtn);
   editor.appendChild(strategyTitle);
@@ -996,11 +1002,11 @@ editor.appendChild(envBar);
     const header = document.createElement("div");
     header.className = "flex justify-between items-start mb-1";
     const labelBox = document.createElement("div");
-    labelBox.className = "flex items-center gap-2 font-semibold " + type.text + " text-sm";
+    labelBox.className = "flex items-center gap-2 font-semibold " + type.text + " text-base";
     labelBox.innerHTML = `
       <span>${type.emoji}</span>
       <span class="strategy-label w-38 truncate">${s.customLabel || type.label}</span>
-      <input type="text" class="strategy-input hidden border px-1 py-0.5 rounded text-sm w-38 truncate"
+      <input type="text" class="strategy-input hidden border px-1 py-0.5 rounded text-base w-38 truncate"
              value="${s.customLabel || type.label}"
              onblur='saveStrategyLabel(this,"${feature.id}", "${s.id}")'
              onkeydown="if(event.key==='Enter'){this.blur();}" />
@@ -1033,13 +1039,13 @@ editor.appendChild(envBar);
     const delBtn = document.createElement("button");
     delBtn.textContent = "❌";
     delBtn.title = "Delete";
-    delBtn.className = "text-gray-400 hover:text-red-500 text-sm";
+    delBtn.className = "text-gray-400 hover:text-red-500 text-base";
     delBtn.onclick = () => removeStrategy(feature.id, s.id);
 
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️";
     editBtn.title = "Edit";
-    editBtn.className = "text-blue-600 text-sm";
+    editBtn.className = "text-blue-600 text-base";
     editBtn.onclick = () => {
       const label = labelBox.querySelector(".strategy-label");
       const input = labelBox.querySelector(".strategy-input");
@@ -1088,7 +1094,7 @@ editor.appendChild(envBar);
   addBtnGroup.className = "flex flex-wrap justify-start gap-2 mb-4";
   function makeAddButton(icon, label, color, onClick) {
     const btn = document.createElement("button");
-    btn.className = `flex items-center gap-1 px-3 py-1 rounded-full ${color.bg} ${color.text} text-sm font-semibold hover:brightness-105 transition`;
+    btn.className = `flex items-center gap-1 px-3 py-1 rounded-full ${color.bg} ${color.text} text-base font-semibold hover:brightness-105 transition`;
     btn.innerHTML = `＋ ${icon} ${label}`;
     btn.onclick = onClick;
     return btn;
@@ -1260,7 +1266,7 @@ function renderConditionRow(cond, index, strategy, rerenderCallback) {
   row.className = "flex flex-wrap gap-2 items-center";
 
   const fieldSelect = document.createElement("select");
-  fieldSelect.className = "border rounded px-2 py-1 text-sm min-w-[160px] flex-1";
+  fieldSelect.className = "border rounded px-2 py-1 text-base min-w-[160px] flex-1";
   filterFields.forEach(f => {
     const opt = document.createElement("option");
     opt.value = f.key;
@@ -1270,7 +1276,7 @@ function renderConditionRow(cond, index, strategy, rerenderCallback) {
   });
 
   const opSelect = document.createElement("select");
-  opSelect.className = "border rounded px-2 py-1 text-sm min-w-[80px]";
+  opSelect.className = "border rounded px-2 py-1 text-base min-w-[80px]";
   ["=", "!=", "in", "not in"].forEach(op => {
     const opt = document.createElement("option");
     opt.value = op;
@@ -1291,7 +1297,7 @@ function renderConditionRow(cond, index, strategy, rerenderCallback) {
       const values = [...new Set(source.map(x => field.field ? x[field.field] : x).filter(Boolean))];
       if (values.length > 0) {
         const select = document.createElement("select");
-        select.className = "w-full border rounded px-2 py-1 text-sm";
+        select.className = "w-full border rounded px-2 py-1 text-base";
         values.forEach(v => {
           const opt = document.createElement("option");
           opt.value = v;
@@ -1315,7 +1321,7 @@ function renderConditionRow(cond, index, strategy, rerenderCallback) {
         input.type = "text";
         input.placeholder = "value";
         input.value = cond.value || "";
-        input.className = "w-full border rounded px-2 py-1 text-sm";
+        input.className = "w-full border rounded px-2 py-1 text-base";
         input.addEventListener("input", () => {
           cond.value = input.value;      // ⭐ 반드시 조건값 저장!
           if (rerenderCallback) rerenderCallback();
@@ -1328,7 +1334,7 @@ function renderConditionRow(cond, index, strategy, rerenderCallback) {
       input.type = "text";
       input.placeholder = "value";
       input.value = cond.value || "";
-      input.className = "w-full border rounded px-2 py-1 text-sm";
+      input.className = "w-full border rounded px-2 py-1 text-base";
       input.addEventListener("input", () => {
         cond.value = input.value;      // ⭐ 반드시 조건값 저장!
         if (rerenderCallback) rerenderCallback();
@@ -1351,7 +1357,7 @@ function renderConditionRow(cond, index, strategy, rerenderCallback) {
 
   const deleteBtn = document.createElement("button");
   deleteBtn.textContent = "✖️";
-  deleteBtn.className = "text-gray-400 hover:text-red-500 text-sm";
+  deleteBtn.className = "text-gray-400 hover:text-red-500 text-base";
   deleteBtn.title = "Delete";
   deleteBtn.onclick = () => {
     strategy.conditions.splice(index, 1);
@@ -1375,7 +1381,7 @@ function renderOverrideForm(schema, valueObj) {
   overrideBox.className = "space-y-2";
   const overrideTitle = document.createElement("div");
   overrideTitle.textContent = "Override Value";
-  overrideTitle.className = "font-semibold text-sm mb-1";
+  overrideTitle.className = "font-semibold text-base mb-1";
   overrideBox.appendChild(overrideTitle);
 
   for (const key in schema.properties) {
@@ -1383,14 +1389,14 @@ function renderOverrideForm(schema, valueObj) {
     const fieldGroup = document.createElement("div");
     fieldGroup.className = "mb-2";
     const label = document.createElement("label");
-    label.className = "block text-sm font-medium";
+    label.className = "block text-base font-medium";
     label.textContent = key;
     fieldGroup.appendChild(label);
 
     let input;
     if (def.enum) {
       input = document.createElement("select");
-      input.className = "w-full border px-2 py-1 rounded text-sm";
+      input.className = "w-full border px-2 py-1 rounded text-base";
       def.enum.forEach(opt => {
         const o = document.createElement("option");
         o.value = opt;
@@ -1404,7 +1410,7 @@ function renderOverrideForm(schema, valueObj) {
       };
     } else if (def.type === "boolean") {
       input = document.createElement("select");
-      input.className = "w-full border px-2 py-1 rounded text-sm";
+      input.className = "w-full border px-2 py-1 rounded text-base";
       ["true", "false"].forEach(val => {
         const o = document.createElement("option");
         o.value = val;
@@ -1419,7 +1425,7 @@ function renderOverrideForm(schema, valueObj) {
     } else {
       input = document.createElement("input");
       input.type = "text";
-      input.className = "w-full border px-2 py-1 rounded text-sm";
+      input.className = "w-full border px-2 py-1 rounded text-base";
       input.value = valueObj[key] || "";
       input.oninput = (e) => {
         valueObj[key] = e.target.value;
@@ -1464,7 +1470,7 @@ function renderStrategyFormUI(feature, strategy) {
   conditionBox.className = "space-y-2";
   const conditionTitle = document.createElement("div");
   conditionTitle.textContent = "Conditions";
-  conditionTitle.className = "font-semibold text-sm mb-1";
+  conditionTitle.className = "font-semibold text-base mb-1";
   conditionBox.appendChild(conditionTitle);
   
   if (!strategy.conditions || strategy.conditions.length === 0) {
@@ -1479,7 +1485,7 @@ function renderStrategyFormUI(feature, strategy) {
     conditionBox.appendChild(row);
   });
   const addConditionBtn = document.createElement("button");
-  addConditionBtn.className = "text-sm text-blue-600 font-semibold hover:underline";
+  addConditionBtn.className = "text- text-blue-600 font-semibold hover:underline";
   addConditionBtn.textContent = "Add Condition";
   addConditionBtn.onclick = () => {
         addConditionToStrategy(strategy);
@@ -1509,20 +1515,20 @@ function renderStrategyFormUI(feature, strategy) {
     variantBox.className = "space-y-2";
     const variantTitle = document.createElement("div");
     variantTitle.textContent = "Variants";
-    variantTitle.className = "font-semibold text-sm mb-1";
+    variantTitle.className = "font-semibold text-base mb-1";
     variantBox.appendChild(variantTitle);
     strategy.variants.forEach((variant, index) => {
       const row = document.createElement("div");
       row.className = "flex flex-wrap items-center gap-2 bg-white p-2 border rounded";
       const nameInput = document.createElement("input");
-      nameInput.className = "border rounded px-2 py-1 text-sm w-20";
+      nameInput.className = "border rounded px-2 py-1 text-base w-20";
       nameInput.value = variant.name;
       nameInput.oninput = (e) => { variant.name = e.target.value; };
       const rolloutInput = document.createElement("input");
       rolloutInput.type = "number";
       rolloutInput.min = 0;
       rolloutInput.max = 100;
-      rolloutInput.className = "border rounded px-2 py-1 text-sm w-20";
+      rolloutInput.className = "border rounded px-2 py-1 text-base w-20";
       rolloutInput.value = variant.rollout;
       rolloutInput.oninput = (e) => {
         variant.rollout = parseInt(e.target.value, 10);
@@ -1546,7 +1552,7 @@ function renderStrategyFormUI(feature, strategy) {
         let input;
         if (def.enum) {
           input = document.createElement("select");
-          input.className = "border rounded px-2 py-1 text-sm";
+          input.className = "border rounded px-2 py-1 text-base";
           def.enum.forEach(opt => {
             const o = document.createElement("option");
             o.value = opt;
@@ -1560,7 +1566,7 @@ function renderStrategyFormUI(feature, strategy) {
           };
         } else if (def.type === "boolean") {
           input = document.createElement("select");
-          input.className = "border rounded px-2 py-1 text-sm";
+          input.className = "border rounded px-2 py-1 text-base";
           ["true", "false"].forEach(val => {
             const o = document.createElement("option");
             o.value = val;
@@ -1575,7 +1581,7 @@ function renderStrategyFormUI(feature, strategy) {
         } else {
           input = document.createElement("input");
           input.type = "text";
-          input.className = "border rounded px-2 py-1 text-sm";
+          input.className = "border rounded px-2 py-1 text-base";
           input.value = variant.value[key] || "";
           input.oninput = (e) => {
             variant.value[key] = e.target.value;
@@ -1613,13 +1619,13 @@ function renderStrategyFormUI(feature, strategy) {
     rolloutBox.className = "space-y-1";
     const rolloutLabel = document.createElement("label");
     rolloutLabel.textContent = "Rollout (%)";
-    rolloutLabel.className = "block text-sm font-medium";
+    rolloutLabel.className = "block text-base font-medium";
     const rolloutInput = document.createElement("input");
     rolloutInput.type = "number";
     rolloutInput.min = 0;
     rolloutInput.max = 100;
     rolloutInput.value = strategy.rollout || 0;
-    rolloutInput.className = "w-full border rounded px-2 py-1 text-sm";
+    rolloutInput.className = "w-full border rounded px-2 py-1 text-base";
     rolloutInput.oninput = (e) => {
       strategy.rollout = parseInt(e.target.value, 10);
     };
@@ -1655,6 +1661,7 @@ const MATRIX_FIELDS = filterFields.map(f => ({
   label: f.title,
   values: () => getFilterValues(f)
 }));
+let selectedMatrixCellKey = null;
 
 function openMatrixModal() {
   const feature = appData.features.find(f => f.id === selectedFeatureId);
@@ -1682,20 +1689,16 @@ function closeMatrixModal() {
   document.getElementById("matrixModal").classList.add("hidden");
   hideMatrixCellPopover();
 }
-
 function renderMatrixTable() {
-  const rowKey = document.getElementById("matrixRowField").value;
-  const colKey = document.getElementById("matrixColField").value;
-  if (rowKey === colKey) {
-    document.getElementById("matrixTable").innerHTML =
-      "<div class='text-red-600 font-bold py-8'>행과 열 축은 서로 달라야 합니다.</div>";
+  const feature = appData.features.find(f => f.id === selectedFeatureId);
+  if (!feature) {
+    document.getElementById("matrixTable").innerHTML = "<div class='text-gray-400 italic p-6'>No feature selected.</div>";
     return;
   }
-  const rowField = MATRIX_FIELDS.find(f=>f.key===rowKey);
-  const colField = MATRIX_FIELDS.find(f=>f.key===colKey);
-  const rows = rowField.values();
-  const cols = colField.values();
-  const feature = appData.features.find(f => f.id === selectedFeatureId);
+  const rowKey = document.getElementById("matrixRowField").value;
+  const colKey = document.getElementById("matrixColField").value;
+  const rows = getFilterValues(filterFields.find(f => f.key === rowKey));
+  const cols = getFilterValues(filterFields.find(f => f.key === colKey));
 
   let html = `<table class="min-w-full border text-xs relative">
     <thead class="bg-gray-100"><tr>
@@ -1707,6 +1710,7 @@ function renderMatrixTable() {
         <tr>
           <td class="px-3 py-2 font-bold bg-gray-50">${r}</td>
           ${cols.map((c, ci) => {
+            const cellKey = `${rowKey}|${r}|${colKey}|${c}`;
             let cellStrat = (feature.strategies||[]).find(strat =>
               (strat.conditions||[]).some(cond => cond.field===rowKey && cond.value==r) &&
               (strat.conditions||[]).some(cond => cond.field===colKey && cond.value==c)
@@ -1721,8 +1725,14 @@ function renderMatrixTable() {
                       cellStrat.type==="experiment"?"bg-green-50":
                       cellStrat.type==="canary"?"bg-yellow-50":"";
             }
-            return `<td class="px-3 py-2 text-center font-semibold cursor-pointer ${color}" 
-              onclick="showMatrixCellMenu('${rowKey}','${r}','${colKey}','${c}', ${ri}, ${ci}, this)">
+            // 포커스 셀 스타일
+            let focusClass = cellKey === selectedMatrixCellKey
+              ? "ring-2 ring-blue-500  z-10"
+              : "";
+            // 🔥 data-matrix-cell 추가, cellElem은 전달 안함!
+            return `<td class="px-3 py-2 text-center font-semibold cursor-pointer ${color} ${focusClass}"
+              data-matrix-cell="${cellKey}"
+              onclick="showMatrixCellMenu('${rowKey}','${r}','${colKey}','${c}',${ri},${ci})">
               <span>${emoji}</span><br><span>${status}</span>
             </td>`;
           }).join("")}
@@ -1733,18 +1743,30 @@ function renderMatrixTable() {
   <div id="matrixCellMenu" class="absolute z-50"></div>
   `;
   document.getElementById("matrixTable").innerHTML = html;
-  hideMatrixCellPopover();
 }
-
 // 팝오버(전략유형 → 값입력) ------------------------------
-window.showMatrixCellMenu = function(rowKey, rowVal, colKey, colVal, rowIdx, colIdx, cellElem) {
+
+window.showMatrixCellMenu = function(rowKey, rowVal, colKey, colVal, rowIdx, colIdx) {
   hideMatrixCellPopover();
-  const table = document.querySelector("#matrixTable table");
-  const left = cellElem.offsetLeft + cellElem.offsetWidth/2 - 80;
-  const top = cellElem.offsetTop + cellElem.offsetHeight;
+
+  // 1. 선택된 셀 저장 및 포커스 강조
+  selectedMatrixCellKey = `${rowKey}|${rowVal}|${colKey}|${colVal}`;
+  renderMatrixTable(); // 표 다시 그림
+
+  // 2. 방금 선택한 td를 DOM에서 찾아 팝업 위치 계산
+  const selector = `[data-matrix-cell="${rowKey}|${rowVal}|${colKey}|${colVal}"]`;
+  const cellElem = document.querySelector(selector);
+  if (!cellElem) return;
+
+  const rect = cellElem.getBoundingClientRect();
+  const left = rect.left + window.scrollX;
+  const top = rect.bottom + window.scrollY + 2;
+
   const popover = document.getElementById("matrixCellPopover");
-  popover.style.left = left+"px";
-  popover.style.top = top+"px";
+  popover.style.position = "absolute";
+  popover.style.left = left + "px";
+  popover.style.top = top + "px";
+  popover.style.zIndex = 9999;
   popover.innerHTML = `
     <div class="bg-white border rounded shadow-lg p-2 flex flex-col gap-1 w-48"
          onclick="event.stopPropagation()">
@@ -1755,22 +1777,25 @@ window.showMatrixCellMenu = function(rowKey, rowVal, colKey, colVal, rowIdx, col
     </div>
   `;
   popover.classList.remove("hidden");
-  // ✨ 팝오버 내부 클릭은 닫히지 않게 하고, 외부만 닫히게!
+
   setTimeout(() => {
     window.addEventListener("mousedown", (e) => {
-      // 팝오버 영역 외부 클릭시만 닫기
       if (!popover.contains(e.target)) hideMatrixCellPopover();
     }, { once:true });
   }, 100);
 };
+
+
+
 function hideMatrixCellPopover() {
   const popover = document.getElementById("matrixCellPopover");
   if (popover) {
     popover.innerHTML = "";
     popover.classList.add("hidden");
   }
+  selectedMatrixCellKey = null;
+  renderMatrixTable();
 }
-
 // 값입력폼
 window.showMatrixCellValueForm = function(rowKey, rowVal, colKey, colVal, type) {
   const feature = appData.features.find(f => f.id === selectedFeatureId);
@@ -1803,7 +1828,7 @@ window.showMatrixCellValueForm = function(rowKey, rowVal, colKey, colVal, type) 
   
   
 else if (type === "experiment") {
-  html += `<div class="font-bold text-sm mb-1">A Variant</div>`;
+  html += `<div class="font-bold text-base mb-1">A Variant</div>`;
   for (const key in schema.properties) {
     const def = schema.properties[key];
     html += `<label class="block">${key}`;
@@ -1823,7 +1848,7 @@ else if (type === "experiment") {
   }
   html += `<label class="block">A (%)<input id="matxval_rolloutA" type="number" min="0" max="100" value="50" class="w-full border rounded px-2 py-1"/></label>`;
 
-  html += `<div class="font-bold text-sm mt-2 mb-1">B Variant</div>`;
+  html += `<div class="font-bold text-base mt-2 mb-1">B Variant</div>`;
   for (const key in schema.properties) {
     const def = schema.properties[key];
     html += `<label class="block">${key}`;
@@ -1959,14 +1984,14 @@ window.editMatrixCellType = function(rowKey, rowVal, colKey, colVal, type) {
 };
 function onBuildCommit() {
   showModal(
-    "Build & Commit",
-    "The Build/Commit feature will be available soon.(This is a demo button.)"
+    "Commit to Repo",
+    "This is a demo button."
   );
 }
 function onRemoteSend() {
   showModal(
     "Send to Remote",
-    "The Send to Remote feature will be available soon.(This is a demo button.)"
+    "This is a demo button."
   );
 }
 
@@ -1974,11 +1999,11 @@ function onRemoteSend() {
 </body>
 <!-- Footer Bar (Build/Commit + Remote Send) -->
 <div id="footer-bar" class="fixed left-0 bottom-0 w-full bg-blue-950 text-white flex items-center justify-end gap-4 px-8 py-3 shadow-lg z-50"
-     style="height:62px;">
+     style="height:55px;">
   <button id="btn-build-commit"
     class="bg-blue-700 hover:bg-blue-600 text-white font-bold px-5 py-2 rounded-xl shadow mr-1 transition"
     onclick="onBuildCommit()">
-    <span class="mr-2">🔨</span> Commit (Build)
+    <span class="mr-2">🔨</span> Commit to Repo
   </button>
   <button id="btn-remote-send"
     class="bg-green-600 hover:bg-green-500 text-white font-bold px-5 py-2 rounded-xl shadow transition"
