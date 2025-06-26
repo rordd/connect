@@ -73,6 +73,24 @@ body {
   </aside>
   <main class="flex flex-1 flex-col overflow-visible">
     <div id="main-content" class="flex-1"></div>
+    
+<template id="devices-view-template">
+  <!-- 상단 필터 바 -->
+  <div id="device-filter-bar" class="bg-gradient-to-r from-indigo-400 to-blue-200 border-b border-gray-200 shadow-sm p-1 my-2 flex flex-wrap gap-3 items-center sticky top-0 z-20">
+
+    <div class="flex flex-wrap gap-2 items-center" id="device-filters"></div>   <!-- ⭐️ 이 부분 추가! -->
+  </div>
+  <div class="flex flex-1 overflow-hidden divide-x divide-gray-300">
+    <!-- 좌: 디바이스 리스트 -->
+    <section class="w-1/3 p-4 bg-white overflow-y-auto h-[calc(100vh-8rem)] border-r border-gray-200" id="device-list-panel"></section>
+    <!-- 중: 피처 리스트 -->
+    <section class="w-1/3 p-4 bg-white overflow-y-auto h-[calc(100vh-8rem)] border-r border-gray-200" id="device-feature-list-panel"></section>
+    <!-- 우: 프리뷰/피처 상세 -->
+    <section class="w-1/3 p-4 bg-white overflow-y-auto h-[calc(100vh-8rem)]" id="device-feature-detail-panel"></section>
+  </div>
+</template>
+    
+    
     <template id="features-view-template">
           
         <div class="bg-gradient-to-r from-red-400 from-red-300 border-b border-gray-200 shadow-sm p-1 my-2 flex flex-wrap gap-3 items-center sticky top-0 z-20" id="filter-bar">
@@ -390,6 +408,43 @@ const appData = {
     // ... 필요 시 추가 가능
   ],
 
+platformSchema : {
+  type: "object",
+  properties: {
+    id: { type: "string", title: "ID" },
+    name: { type: "string", title: "Platform Name" },
+    version: { type: "string", title: "Version" },
+    // ...필요한 필드 계속 추가
+  }
+},
+
+
+
+deviceGroupSchema : {
+  type: "object",
+  properties: {
+    id: { type: "string", title: "Group ID" },
+    name: { type: "string", title: "Group Name" },
+    machine: { type: "string", title: "Machine Type", enum: ["O22", "k8lp", "k8hp"], enumNames: ["OLED", "NanoCell", "QNED"] },
+    manufactureYear: { type: "string", title: "Year" },
+    // ...
+  }
+},
+
+
+deviceSchema : {
+  type: "object",
+  properties: {
+    id: { type: "string", title: "Device ID" },
+    name: { type: "string", title: "Device Name" },
+    memory: { type: "number", title: "Memory (GB)" },
+    tier: { type: "string", title: "Tier", enum: ["standard", "premium", "deluxe"], enumNames: ["Standard", "Premium", "Deluxe"] },
+    edition: { type: "string", title: "Edition", enum: ["basic", "gaming", "limited"], enumNames: ["Basic", "Gaming", "Limited"] },
+    // ...계속 확장
+  }
+},
+
+
   platforms: [
     { id: "25", version: "webOS 25", deviceGroups: ["O22-2024", "k8lp-2024", "O24-2025", "K24-2025"] },
     { id: "26", version: "webOS 26", deviceGroups: ["O22-2024", "k8lp-2024", "O24-2025", "K24-2025", "O26-2026", "K26-2026"] }
@@ -436,6 +491,10 @@ let currentFilters = {
 };
 let selectedFeatureId = null;
 let defaultSettingsOpen = true;
+
+let selectedDeviceId = null;
+let selectedDeviceFeatureId = null; // 중앙에서 선택한 피처 id
+let deviceFilters = {}; // 상단 글로벌 필터 상태
 
 
 function getFilterValues(config) {
@@ -672,41 +731,40 @@ function renderFilterMenu() {
 }
 
 // ------ 전략 평가/프리뷰 렌더 ------
-
 function evaluateStrategyForPreview(feature, filters) {
   if (!feature || !feature.strategies) return { type: "default", value: feature.defaultValue };
 
   for (let strat of feature.strategies) {
     if (!strat.conditions || strat.conditions.length === 0) continue;
     let match = strat.conditions.every(cond => {
-      const filterValue = filters[cond.field];
-      
-      /*
-  alert("condition.field:"+ cond.field+
-    "| filterValue:"+ filterValue+
-    "| cond.value:"+cond.value+
-    "| op:"+ cond.op);
-      */
+      let filterValue = filters[cond.field];
+      // path 미지원시 계층적으로도 탐색 (예: "device.name" → filters.device?.name)
+      if (filterValue === undefined && cond.field.includes(".")) {
+        const parts = cond.field.split(".");
+        let val = filters;
+        for (const p of parts) {
+          if (val && typeof val === "object") val = val[p];
+          else { val = undefined; break; }
+        }
+        filterValue = val;
+      }
       if (filterValue === undefined) return false;
       if (cond.op === "=") return String(filterValue) === String(cond.value);
-if (cond.op === "!=") return String(filterValue) !== String(cond.value);
-
+      if (cond.op === "!=") return String(filterValue) !== String(cond.value);
       if (cond.op === "in") return Array.isArray(cond.value) ? cond.value.includes(filterValue) : false;
       if (cond.op === "not in") return Array.isArray(cond.value) ? !cond.value.includes(filterValue) : false;
       return false;
     });
     if (match) {
-      if (strat.type === "experiment") {
-        return { type: "experiment", strat };
-      }
-      if (strat.type === "canary") {
-        return { type: "canary", strat };
-      }
+      if (strat.type === "experiment") return { type: "experiment", strat };
+      if (strat.type === "canary") return { type: "canary", strat };
       return { type: "rule", strat };
     }
   }
   return { type: "default", value: feature.defaultValue };
 }
+
+
 
 function renderPrettyObject(obj) {
   if (!obj || typeof obj !== 'object') return '';
@@ -1232,7 +1290,17 @@ function renderMain() {
     const search = document.getElementById("feature-search");
     if (search) search.oninput = renderFeatures;
     
-  } else {
+  } 
+  
+   else if (currentView === 'devices') {
+    container.innerHTML = document.getElementById('devices-view-template').innerHTML;
+    renderDeviceFilterBar();
+    renderDeviceListPanel();
+    renderDeviceFeatureListPanel();
+    renderDeviceFeatureDetailPanel();
+  }
+  
+  else {
     const name = currentView.charAt(0).toUpperCase() + currentView.slice(1);
     container.innerHTML = `
       <div class='w-full h-full flex items-center justify-center'>
@@ -1242,6 +1310,8 @@ function renderMain() {
       </div>`;
   }
 }
+
+
 function highlightNav(view) {
   currentView = view.toLowerCase(); // 현재 뷰 저장
   const buttons = document.querySelectorAll("nav button");
@@ -1994,6 +2064,495 @@ function onRemoteSend() {
     "This is a demo button."
   );
 }
+
+function renderDeviceFilterBar() {
+  const filtersDiv = document.getElementById("device-filters");
+  const dropdown = document.getElementById("add-device-filter-dropdown");
+
+  // 1. 필터 div 리셋
+  filtersDiv.innerHTML = "";
+
+  // 2. 각 필터(기본/추가) 렌더
+  for (const key in currentFilters) {
+    const config = filterFields.find(f => f.key === key);
+    if (!config) continue;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "flex items-center gap-2 bg-transparent px-2 py-1 rounded";
+
+    const label = document.createElement("label");
+    label.textContent = config.title;
+    label.className = "font-semibold text-base text-gray-700";
+    wrapper.appendChild(label);
+
+    const select = document.createElement("select");
+    select.className = "border rounded-lg px-2 py-1 font-bold text-base bg-blue-50 shadow focus:ring-2 focus:ring-blue-400";
+    select.onchange = (e) => {
+      currentFilters[key] = e.target.value === "All" ? undefined : e.target.value;
+      selectedDeviceId = null;
+      selectedDeviceFeatureId = null;
+      renderDeviceFilterBar();
+      renderDeviceListPanel();
+      renderDeviceFeatureListPanel();
+      renderDeviceFeatureDetailPanel();
+    };
+
+    const values = getFilterValues(config);
+    [undefined, ...values].forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v || "All";
+      opt.text = v || "All";
+      if (currentFilters[key] === v || (v === undefined && currentFilters[key] === undefined)) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    });
+
+    wrapper.appendChild(select);
+
+    // 기본 4개(Platform, Group, Device, Country) 외에는 ✕버튼(삭제) 지원
+    if (!["platform.version", "deviceGroup.name", "device.name", "country"].includes(key)) {
+      const del = document.createElement("button");
+      del.textContent = "✕";
+      del.className = "ml-1 text-2xs font-semibold text-black hover:text-red-700";
+      del.onclick = () => {
+        delete currentFilters[key];
+        renderDeviceFilterBar();
+        renderDeviceListPanel();
+        renderDeviceFeatureListPanel();
+        renderDeviceFeatureDetailPanel();
+      };
+      wrapper.appendChild(del);
+    }
+
+    filtersDiv.appendChild(wrapper);
+  }
+
+  // 3. More(+Add Filter) 버튼 + 드롭다운
+  // (중복 추가 방지)
+  if (!document.getElementById("add-device-filter-dropdown")) {
+    const addFilterDiv = document.createElement("div");
+    addFilterDiv.className = "relative overflow-visible z-50";
+    addFilterDiv.id = "add-device-filter-dropdown";
+
+    const btn = document.createElement("button");
+    btn.className = "px-4 py-1.5 bg-blue-600 text-white text-base font-semibold rounded-lg shadow hover:bg-blue-700 transition";
+    btn.textContent = "More";
+    btn.onclick = toggleDeviceFilterMenu;
+    addFilterDiv.appendChild(btn);
+
+    const menu = document.createElement("div");
+    menu.id = "device-filter-menu";
+    menu.className = "absolute right-0 mt-1 w-48 bg-white border border-gray-400 rounded shadow-lg hidden z-50";
+    addFilterDiv.appendChild(menu);
+
+    filtersDiv.appendChild(addFilterDiv);
+  }
+}
+
+
+function toggleDeviceFilterMenu() {
+  const menu = document.getElementById("device-filter-menu");
+  menu.classList.toggle("hidden");
+  renderDeviceFilterMenu();
+}
+function renderDeviceFilterMenu() {
+  const menu = document.getElementById("device-filter-menu");
+  menu.innerHTML = "";
+  const unused = filterFields.filter(f => !(f.key in currentFilters));
+  unused.forEach(f => {
+    const btn = document.createElement("button");
+    btn.textContent = f.title;
+    btn.className = "w-full text-left px-4 py-2 text-base text-gray-800 hover:bg-[#26314f]";
+    btn.onclick = () => {
+      currentFilters[f.key] = undefined;
+      menu.classList.add("hidden");
+      renderDeviceFilterBar();
+      renderDeviceListPanel();
+      renderDeviceFeatureListPanel();
+      renderDeviceFeatureDetailPanel();
+    };
+    menu.appendChild(btn);
+  });
+}
+
+
+
+function getFilteredDevices() {
+  let devices = appData.devices || [];
+  const deviceGroups = appData.deviceGroups || [];
+  const platforms = appData.platforms || [];
+
+  let enrichedDevices = devices.map(dev => {
+    const group = deviceGroups.find(g => g.devices?.includes(dev.id));
+    // 플랫폼 매칭: group이 소속된 모든 플랫폼에서 group.id를 포함하는 것(다중 플랫폼 가능)
+    const matchingPlatforms = group
+      ? platforms.filter(p => (p.deviceGroups || []).includes(group.id))
+      : [];
+    return { dev, group, platforms: matchingPlatforms };
+  });
+
+  return enrichedDevices.filter(row => {
+    for (const field of filterFields) {
+      const filterVal = currentFilters[field.key];
+      if (!filterVal) continue;
+
+      // ---- 동적 path 해석 (핵심!!) ----
+      let value = undefined;
+      if (field.key.startsWith("platform.")) {
+        // 여러 플랫폼 중 '하나라도' 값이 일치하면 OK
+        const prop = field.key.split(".")[1];
+        value = row.platforms.find(p => String(p[prop]) === String(filterVal));
+        if (!value) return false;
+      } else if (field.key.startsWith("deviceGroup.")) {
+        const prop = field.key.split(".")[1];
+        value = row.group ? row.group[prop] : undefined;
+        if (String(value) !== String(filterVal)) return false;
+      } else if (field.key.startsWith("device.")) {
+        const prop = field.key.split(".")[1];
+        value = row.dev ? row.dev[prop] : undefined;
+        if (String(value) !== String(filterVal)) return false;
+      } else if (field.key === "country") {
+        // 디바이스엔 country 없음 (전략/프리뷰에서만 사용)
+      }
+      // ...필요시 추가
+    }
+    return true;
+  }).map(row => row.dev);
+}
+
+function renderDeviceListPanel() {
+  const panel = document.getElementById('device-list-panel');
+  if (!panel) return;
+
+  const filteredDevices = getFilteredDevices();
+
+  if (filteredDevices.length === 0) {
+    panel.innerHTML = `<div class="text-gray-400 p-8 text-center">No devices found for current filter.</div>`;
+    return;
+  }
+
+  panel.innerHTML = filteredDevices.map(dev => {
+    // 디바이스 그룹/플랫폼 정보 조회 (for display)
+    const group = (appData.deviceGroups || []).find(g => g.devices?.includes(dev.id));
+    const platform = group ? (appData.platforms || []).find(p => p.id === group.platformId) : null;
+    return `
+      <div class="rounded-xl border px-4 py-3 mb-3 cursor-pointer
+        ${selectedDeviceId===dev.id ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-100'}"
+        onclick="handleSelectDevice('${dev.id}')">
+        <div class="font-bold text-base">${dev.name}</div>
+        <div class="text-xs text-gray-500 flex flex-wrap gap-2">
+          ${platform ? `<span>${platform.name}</span>` : ""}
+          ${group ? `<span>${group.name}</span>` : ""}
+          <span>${dev.memory || '-'}GB</span>
+          <span>${dev.tier || '-'}</span>
+          <span>${dev.edition || '-'}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+
+function handleSelectDevice(deviceId) {
+  selectedDeviceId = deviceId;
+  selectedDeviceFeatureId = null;
+  // ✅ 상단 필터(currentFilters) 갱신/동기화 제거!
+  renderDeviceListPanel();
+  renderDeviceFeatureListPanel();
+  renderDeviceFeatureDetailPanel();
+}
+function handleSelectDeviceFeature(featureId) {
+  selectedDeviceFeatureId = featureId;
+  renderDeviceFeatureListPanel();
+  renderDeviceFeatureDetailPanel();
+}
+
+function renderDeviceFeatureListPanel() {
+  const panel = document.getElementById('device-feature-list-panel');
+  if (!panel) return;
+  if (!selectedDeviceId) {
+    panel.innerHTML = "<div class='text-gray-400 p-8 text-center'>No device selected.</div>";
+    return;
+  }
+
+  // 선택 디바이스, 그룹, 플랫폼 정보
+  const dev = (appData.devices || []).find(d => d.id === selectedDeviceId);
+  if (!dev) return;
+  const group = (appData.deviceGroups || []).find(g => g.devices?.includes(dev.id));
+  const platform = group ? (appData.platforms || []).find(p => (p.deviceGroups || []).includes(group.id)) : null;
+  const features = appData.features || [];
+
+  // 전략 평가용 context (path key 동시 포함)
+  let context = {};
+  filterFields.forEach(f => {
+    const key = f.key;
+    if (key.startsWith("device.") && dev) {
+      context[key] = dev[key.split(".")[1]];
+    } else if (key.startsWith("deviceGroup.") && group) {
+      context[key] = group[key.split(".")[1]];
+    } else if (key.startsWith("platform.") && platform) {
+      context[key] = platform[key.split(".")[1]];
+    } else if (key === "country" && previewEnv && previewEnv.country) {
+      context["country"] = previewEnv.country;
+    }
+  });
+  Object.assign(context, dev, group, platform, previewEnv);
+
+  panel.innerHTML = `
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold leading-none mb-0">
+        Feature List <span class="text-base text-blue-700 font-normal">(for ${dev.name})</span>
+      </h2>
+    </div>
+    <div class="flex flex-col gap-4">
+      ${features.map(f => {
+        // 전략 평가 결과
+        const result = evaluateStrategyForPreview(f, context);
+        const strategyType = result.type;
+
+        // 대표 라벨(짧고 굵게)
+        let mainLabel = "";
+        if (strategyType === "rule") {
+          let ruleName = result.strat?.customLabel || "Rule";
+          let displayName = ruleName.length > 20 ? ruleName.slice(0, 18) + "..." : ruleName;
+          mainLabel = `<span title="${ruleName}" class="flex items-center gap-1 font-bold text-blue-700">🎯 ${displayName}</span>`;
+        } else if (strategyType === "experiment") {
+          let expName = result.strat?.customLabel || "Experiment";
+          let displayName = expName.length > 20 ? expName.slice(0, 18) + "..." : expName;
+          mainLabel = `<span title="${expName}" class="flex items-center gap-1 font-bold text-green-700">🧪 ${displayName}</span>`;
+        } else if (strategyType === "canary") {
+          let cnName = result.strat?.customLabel || "Canary";
+          let displayName = cnName.length > 20 ? cnName.slice(0, 18) + "..." : cnName;
+          let rollout = result.strat?.rollout ?? "";
+          mainLabel = `
+            <span title="${cnName}" class="flex items-center gap-1 font-bold text-yellow-700">
+              🐤 ${displayName}
+              <span class="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-900 text-xs rounded font-bold">Rollout: ${rollout}%</span>
+            </span>`;
+        } else {
+          mainLabel = `<span class="text-gray-500 font-semibold">Default Values</span>`;
+        }
+
+        // 값 태그 (필드값, 최대 2개, 나머지는 more)
+        const valueObj = (
+          strategyType === "canary"
+            ? result.strat?.value
+            : result.value || result.strat?.value || {}
+        ) || {};
+        const previewTags = Object.entries(valueObj)
+          .slice(0, 2).map(([k, v]) => {
+            let color = "bg-blue-100 text-blue-800";
+            if (typeof v === "boolean") color = v ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+            return `<span class='inline-block ${color} px-2 py-0.5 rounded-full text-xs'>${k}: ${v}</span>`;
+          }).join(" ") +
+          (Object.keys(valueObj).length > 2
+            ? ` <span class='text-xs text-gray-500'>+${Object.keys(valueObj).length - 2} more...</span>`
+            : "");
+
+        // Experiment 전략일 때만 variants 별도 표기 (본문, 설명 위)
+        let variantRow = "";
+        if (strategyType === "experiment" && Array.isArray(result.strat?.variants)) {
+          let variants = result.strat.variants.map(v =>
+            `<span class="inline-block bg-green-50 text-green-800 px-2 py-0.5 rounded-full text-xs mr-1">${v.name} <span class="text-gray-500">(${v.rollout}%)</span></span>`
+          ).join("");
+          if (variants) {
+            variantRow = `<div class="flex flex-wrap items-center gap-1 mb-1">Variant: ${variants}</div>`;
+          }
+        }
+
+        // 토글 (읽기전용, 우측 고정)
+        let toggle = "";
+        if (strategyType === "experiment") {
+          // 실험 전략이면 토글 대신 중립적 대시(-)
+          toggle = `<span class="text-gray-400 font-extrabold text-xl select-none" title="Variants have different values">—</span>`;
+        } else if ("enabled" in valueObj) {
+          const isEnabled = valueObj.enabled;
+          toggle = `
+            <label class='relative inline-flex items-center cursor-not-allowed opacity-60'>
+              <input type='checkbox' class='sr-only peer' disabled ${isEnabled ? "checked" : ""} />
+              <div class='w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 transition-colors'></div>
+              <div class='absolute left-[2px] top-[2px] bg-white w-5 h-5 rounded-full transition-transform peer-checked:translate-x-full'></div>
+            </label>`;
+        }
+
+        return `
+          <div class="rounded-2xl border flex flex-col gap-1 px-4 py-3 transition
+            cursor-pointer shadow hover:shadow-xl
+            ${f.id === selectedDeviceFeatureId ? "border-blue-500 ring-2 ring-blue-300 bg-blue-50" : "border-gray-400 bg-white"}"
+            onclick="handleSelectDeviceFeature('${f.id}')">
+            <div class="flex items-center mb-1 justify-between">
+              <span class="text-lg font-semibold">${f.name}</span>
+              ${toggle}
+            </div>
+            <div class="flex items-center gap-2 mb-1">${mainLabel}</div>
+            <div class="flex flex-wrap gap-1 mb-1">${previewTags}</div>
+            ${variantRow}
+            <div class="text-xs text-gray-400">${f.description || ''}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+
+// 프리뷰 환경 필터에 표시할 필드(여기서는 'country'만, 필요시 추가)
+const previewEnvFields = filterFields.filter(f =>
+  ["country"].includes(f.key)
+);
+
+// 프리뷰 환경 상태
+let previewEnv = { country: undefined }; // 나중에 region 등 추가 가능
+
+function renderDeviceFeatureDetailPanel() {
+  const panel = document.getElementById('device-feature-detail-panel');
+  if (!panel) return;
+
+  // 선택 디바이스/피처 없으면 안내
+  if (!selectedDeviceId || !selectedDeviceFeatureId) {
+    panel.innerHTML = "<div class='text-gray-400 p-8 text-center'>No feature selected.</div>";
+    return;
+  }
+
+  // 디바이스, 그룹, 플랫폼, 피처 정보
+  const dev = appData.devices.find(d => d.id === selectedDeviceId);
+  const group = appData.deviceGroups.find(g => g.devices?.includes(selectedDeviceId));
+  const platform = appData.platforms.find(p => group && (p.deviceGroups||[]).includes(group.id));
+  const feature = (appData.features || []).find(f => f.id === selectedDeviceFeatureId);
+
+  // 평가용 context: 카드와 완전히 동일하게!
+  let context = {};
+  filterFields.forEach(f => {
+    const key = f.key;
+    if (key.startsWith("device.") && dev) {
+      context[key] = dev[key.split(".")[1]];
+    } else if (key.startsWith("deviceGroup.") && group) {
+      context[key] = group[key.split(".")[1]];
+    } else if (key.startsWith("platform.") && platform) {
+      context[key] = platform[key.split(".")[1]];
+    } else if (key === "country" && previewEnv && previewEnv.country) {
+      context["country"] = previewEnv.country;
+    }
+  });
+  Object.assign(context, dev, group, platform, previewEnv);
+
+  // 전략 평가
+  const result = evaluateStrategyForPreview(feature, context);
+
+  // 값 태그
+  const valueObj = (
+    result.type === "canary"
+      ? result.strat?.value
+      : result.value || result.strat?.value || {}
+  ) || {};
+  const valueTags = Object.entries(valueObj)
+    .map(([k, v]) => {
+      let color = "bg-blue-100 text-blue-800";
+      if (typeof v === "boolean") color = v ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+      return `<span class='inline-block ${color} px-2 py-0.5 rounded-full text-xs mr-1'>${k}: ${v}</span>`;
+    }).join(" ");
+
+  // 전략 유형 라벨
+  let stratLabel = "";
+  if (result.type === "rule") {
+    let ruleName = result.strat?.customLabel || "Rule";
+    stratLabel = `<span class="inline-block font-bold text-blue-600">🎯 ${ruleName}</span>`;
+  } else if (result.type === "experiment") {
+    let expName = result.strat?.customLabel || "Experiment";
+    stratLabel = `<span class="inline-block font-bold text-green-700">🧪 ${expName}</span>`;
+  } else if (result.type === "canary") {
+    let cnName = result.strat?.customLabel || "Canary";
+    let rollout = result.strat?.rollout ?? "";
+    stratLabel = `<span class="inline-block font-bold text-yellow-700">🐤 ${cnName} (${rollout}%)</span>`;
+  } else {
+    stratLabel = `<span class="inline-block font-semibold text-gray-500">Default Values</span>`;
+  }
+
+  // 상세 디바이스 정보
+  let deviceInfoHtml = `
+    <div class="mb-2 bg-gray-50 border px-3 py-2 rounded text-xs text-gray-600">
+      <b>Device:</b> ${dev.name} |
+      <b>Group:</b> ${group ? group.name : '-'} |
+      <b>Platform:</b> ${platform ? platform.version : '-'} |
+      <b>Memory:</b> ${dev.memory || '-'}GB |
+      <b>Tier:</b> ${dev.tier || '-'} |
+      <b>Edition:</b> ${dev.edition || '-'}
+    </div>
+  `;
+
+  // 프리뷰 환경 필터(국가 등)
+  let envFilterHtml = `<div class="mb-2 flex items-center gap-3">
+    <span class="font-semibold text-base text-blue-800">Preview Environment:</span>`;
+  previewEnvFields.forEach(f => {
+    const values = getFilterValues(f);
+    envFilterHtml += `
+      <label class="font-semibold text-sm ml-2 mr-1">${f.title}:</label>
+      <select class="border rounded px-2 py-1 text-base"
+        onchange="onPreviewEnvChange('${f.key}', this.value)">
+        <option value="">All</option>
+        ${values.map(v => `<option value="${v}" ${previewEnv[f.key]===v?"selected":""}>${v}</option>`).join('')}
+      </select>
+    `;
+  });
+  envFilterHtml += `</div>`;
+
+  // 전략 상세/preview 영역
+  let previewHtml = "";
+  if (result.type === "default") {
+    previewHtml = `
+      <div class="mb-2 text-gray-800"> 
+        <span class="font-semibold">Default Settings Applied</span>
+        <div class="text-gray-500 text-xs">No strategy matches the selected device and preview environment; default values are used.</div>
+      </div>
+      ${valueTags}
+    `;
+  } else if (result.type === "rule") {
+    previewHtml = `
+      <div class="mb-2">
+        ${stratLabel}
+        <div class="text-gray-500 text-xs mb-1">Conditions: ${result.strat.conditions.map(c => `${c.field} ${c.op} ${c.value}`).join(", ")}</div>
+      </div>
+      ${valueTags}
+    `;
+  } else if (result.type === "experiment") {
+    const { strat } = result;
+    previewHtml = `
+      <div class="mb-2">
+        ${stratLabel}
+        <div class="text-gray-500 text-xs mb-1">Conditions: ${strat.conditions.map(c => `${c.field} ${c.op} ${c.value}`).join(", ")}</div>
+      </div>
+      <div class="space-y-2">
+        ${strat.variants.map(variant => `
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 bg-gray-200 rounded">${variant.name}</span>
+            <span class="text-xs text-gray-500">Rollout: ${variant.rollout}%</span>
+            ${Object.entries(variant.value || {}).map(([k, v]) => {
+              let color = "bg-blue-100 text-blue-800";
+              if (typeof v === "boolean") color = v ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
+              return `<span class='inline-block ${color} px-2 py-0.5 rounded-full text-xs mr-1'>${k}: ${v}</span>`;
+            }).join(" ")}
+          </div>
+        `).join("")}
+      </div>
+    `;
+  } else if (result.type === "canary") {
+    const { strat } = result;
+    previewHtml = `
+      <div class="mb-2">
+        ${stratLabel}
+        <div class="text-gray-500 text-xs mb-1">Conditions: ${strat.conditions.map(c => `${c.field} ${c.op} ${c.value}`).join(", ")}</div>
+        <div class="text-base text-yellow-800 font-bold mb-2">Rollout: ${strat.rollout}%</div>
+      </div>
+      ${valueTags}
+    `;
+  }
+
+  // 통합 렌더링
+  panel.innerHTML = envFilterHtml + deviceInfoHtml + previewHtml;
+}
+
+
 
 </script>
 </body>
