@@ -32,6 +32,14 @@ body {
 }
 </style>
 </head>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+
+
+
 <body class="bg-gray-100 text-gray-900 font-sans h-screen flex flex-col">
 <div class="flex flex-1 overflow-hidden">
     
@@ -174,6 +182,188 @@ let currentEnv = "production"; // 기본 환경
 const environmentNames = ["development", "staging", "production"];
 
 const appData = {
+    metrics: [
+  // User/Behavior
+  {
+    key: "app_launch_count",
+    displayName: "App Launch Count",
+    description: "앱이 실행된 총 횟수",
+    unit: "times",
+    type: "counter",
+    category: "usage"
+  },
+  {
+    key: "unique_users",
+    displayName: "Unique Users",
+    description: "중복 없는 일/주/월 사용자 수",
+    unit: "users",
+    type: "user",
+    category: "usage"
+  },
+  {
+    key: "retention_d1",
+    displayName: "1-day Retention Rate",
+    description: "설치 후 1일 내 재실행 비율",
+    unit: "%",
+    type: "retention",
+    category: "usage"
+  },
+  {
+    key: "retention_d7",
+    displayName: "7-day Retention Rate",
+    description: "설치 후 7일 내 재실행 비율",
+    unit: "%",
+    type: "retention",
+    category: "usage"
+  },
+
+  // Ad/Revenue
+  {
+    key: "ad_impressions",
+    displayName: "Ad Impressions",
+    description: "광고가 노출된 총 횟수",
+    unit: "times",
+    type: "counter",
+    category: "ad"
+  },
+  {
+    key: "ad_clicks",
+    displayName: "Ad Clicks",
+    description: "광고 영역 클릭 총 횟수",
+    unit: "times",
+    type: "counter",
+    category: "ad"
+  },
+  {
+    key: "ad_ctr",
+    displayName: "Ad Click-Through Rate",
+    description: "광고 클릭수 / 노출수 비율",
+    unit: "%",
+    type: "ratio",
+    category: "ad"
+  },
+  {
+    key: "ad_skip_rate",
+    displayName: "Ad Skip Rate",
+    description: "광고 스킵 이벤트 비율",
+    unit: "%",
+    type: "ratio",
+    category: "ad"
+  },
+
+  // Content/Feature
+  {
+    key: "watch_time",
+    displayName: "Watch Time",
+    description: "총 영상 시청 시간(분)",
+    unit: "minutes",
+    type: "duration",
+    category: "content"
+  },
+  {
+    key: "play_count",
+    displayName: "Play Count",
+    description: "전체 영상 재생된 횟수",
+    unit: "times",
+    type: "counter",
+    category: "content"
+  },
+  {
+    key: "completion_rate",
+    displayName: "Completion Rate",
+    description: "콘텐츠의 끝까지 시청한 비율",
+    unit: "%",
+    type: "ratio",
+    category: "content"
+  },
+  {
+    key: "feature_on_rate",
+    displayName: "Feature Usage Rate",
+    description: "전체 중 해당 기능 사용 비율",
+    unit: "%",
+    type: "ratio",
+    category: "feature"
+  },
+  {
+    key: "settings_change_count",
+    displayName: "Settings Change Count",
+    description: "사용자가 환경설정(설정값) 변경한 횟수",
+    unit: "times",
+    type: "counter",
+    category: "feature"
+  },
+
+  // Funnel/Purchase/User
+  {
+    key: "conversion_rate",
+    displayName: "Conversion Rate",
+    description: "구매·설치·클릭 등 전환 비율",
+    unit: "%",
+    type: "ratio",
+    category: "funnel"
+  },
+  {
+    key: "purchase_count",
+    displayName: "Purchase Count",
+    description: "상품/서비스 결제(구매) 총 횟수",
+    unit: "times",
+    type: "counter",
+    category: "funnel"
+  },
+  {
+    key: "signups",
+    displayName: "Sign-ups",
+    description: "새로 가입한 회원 수",
+    unit: "users",
+    type: "counter",
+    category: "funnel"
+  },
+
+  // System/Quality/Defect
+  {
+    key: "crash_count",
+    displayName: "Crash Count",
+    description: "앱이 비정상 종료(크래시)된 횟수",
+    unit: "cases",
+    type: "counter",
+    category: "defect"
+  },
+  {
+    key: "error_rate",
+    displayName: "Error Rate",
+    description: "전체 요청 중 에러 응답 비율",
+    unit: "%",
+    type: "ratio",
+    category: "defect"
+  },
+  {
+    key: "latency_avg",
+    displayName: "Average Latency",
+    description: "평균 네트워크/서비스 응답 시간(ms)",
+    unit: "ms",
+    type: "duration",
+    category: "system"
+  },
+
+  // Device/IoT/Environment
+  {
+    key: "voice_command_count",
+    displayName: "Voice Command Count",
+    description: "음성명령 인식·실행 건수",
+    unit: "times",
+    type: "counter",
+    category: "device"
+  },
+  {
+    key: "device_pairing_count",
+    displayName: "Device Pairing Count",
+    description: "연동된 스마트 기기/악세서리 페어링 횟수",
+    unit: "times",
+    type: "counter",
+    category: "device"
+  }
+  // 필요시 계속 확장 가능!
+],
   features: [
     // 1. 홈런처
     {
@@ -818,11 +1008,30 @@ function renderPreview() {
     `;
   } else if (result.type === "experiment") {
     const { strat } = result;
+    
+    
+      // ⭐ [여기 한 덩어리 추가] ⭐
+  let metricsLine = "";
+  if (Array.isArray(strat.metrics) && strat.metrics.length > 0) {
+    const metricsText = strat.metrics
+      .map(key => {
+        const m = (appData.metrics || []).find(m => m.key === key);
+        return m ? `${m.displayName} (${m.unit})` : key;
+      }).join(", ");
+    metricsLine = `<div class="mb-1 text-xs text-blue-800 font-bold">
+      <span class="mr-1">📊 Metrics:</span> ${metricsText}
+    </div>`;
+  }
+
+    
     previewDiv.innerHTML = `
       <div class="mb-2">
         <span class="font-semibold text-green-600">🧪 Experiment Strategy Applied: ${strat.customLabel || "Experiment"}</span>
         <div class="text-gray-500 text-xs mb-1">Conditions: ${strat.conditions.map(c => `${c.field} ${c.op} ${c.value}`).join(", ")}</div>
       </div>
+      
+        ${metricsLine}
+      
       <div class="space-y-2">
         ${strat.variants.map(variant => `
           <div class="flex items-center gap-2">
@@ -835,16 +1044,48 @@ function renderPreview() {
     `;
   } else if (result.type === "canary") {
     const { strat } = result;
+      let metricsLine = "";
+  if (Array.isArray(strat.metrics) && strat.metrics.length > 0) {
+    const metricsText = strat.metrics
+      .map(key => {
+        const m = (appData.metrics || []).find(m => m.key === key);
+        return m ? `${m.displayName} (${m.unit})` : key;
+      }).join(", ");
+    metricsLine = `<div class="mb-1 text-xs text-yellow-800 font-bold">
+      <span class="mr-1">📊 Metrics:</span> ${metricsText}
+    </div>`;
+  }
     previewDiv.innerHTML = `
       <div class="mb-2">
         <span class="font-semibold text-yellow-600">🐤 Canary Strategy Applie: ${strat.customLabel || "Canary"}</span>
         <div class="text-gray-500 text-xs mb-1">Conditions: ${strat.conditions.map(c => `${c.field} ${c.op} ${c.value}`).join(", ")}</div>
         <div class="text-base text-yellow-800 font-bold mb-2">Rollout: ${strat.rollout}%</div>
+
       </div>
+                    ${metricsLine}
+    
 ${renderPrettyObject(strat.value)}
     `;
   }
+  
+  
+  if (result.type === "experiment" || result.type === "canary") 
+  // ----- [Show Result 버튼: experiment 전략일 때] -----
+   {
+    const btnDiv = document.createElement("div");
+    btnDiv.className = "mt-5 flex justify-start"; // 좌측 정렬
+    const btn = document.createElement("button");
+    btn.className = "bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-semibold shadow";
+    btn.textContent = "Show Result";
+    btn.onclick = function() {
+      showStrategyResultModal(result.strat);
+    };
+    btnDiv.appendChild(btn);
+    // previewDiv는 이미 있음
+    previewDiv.appendChild(btnDiv);
+  }
 }
+
 </script>
 
 <script>
@@ -1555,8 +1796,9 @@ function renderStrategyFormUI(feature, strategy) {
     conditionBox.appendChild(row);
   });
   const addConditionBtn = document.createElement("button");
-  addConditionBtn.className = "text- text-blue-600 font-semibold hover:underline";
-  addConditionBtn.textContent = "Add Condition";
+  addConditionBtn.className = "mt-1 bg-blue-600 text-white px-3 py-1 rounded font-semibold hover:bg-blue-700";
+  
+  addConditionBtn.textContent = "+Add Condition";
   addConditionBtn.onclick = () => {
         addConditionToStrategy(strategy);
     renderStrategyEditor();
@@ -1564,6 +1806,76 @@ function renderStrategyFormUI(feature, strategy) {
   };
   conditionBox.appendChild(addConditionBtn);
   wrapper.appendChild(conditionBox);
+
+
+
+if (strategy.type === "experiment" || strategy.type === "canary" ) {
+  // Metrics 배열 없으면 초기화
+  if (!strategy.metrics) strategy.metrics = [];
+
+  const metricBox = document.createElement("div");
+  metricBox.className = "mb-2";
+  const metricTitle = document.createElement("div");
+  metricTitle.textContent = "Metrics";
+  metricTitle.className = "font-semibold text-base mb-1";
+  metricBox.appendChild(metricTitle);
+
+  // 각 metric 한 줄씩 (드롭박스+삭제 버튼, 반응형)
+  strategy.metrics.forEach((metricKey, idx) => {
+    const metricRow = document.createElement("div");
+    // grid로 칸 넘침 방지 (드롭박스 1fr, 버튼 auto)
+    metricRow.className = "grid grid-cols-[1fr_auto] gap-1 mb-1 w-full";
+    // 드롭박스
+    const select = document.createElement("select");
+    select.className = "border px-2 py-1 rounded text-base w-full";
+    select.style.minWidth = "0"; // flex/grid overflow 방지
+    select.innerHTML =
+      appData.metrics.map(m =>
+        `<option value="${m.key}" ${m.key===metricKey?'selected':''}>
+          ${m.displayName} (${m.unit})
+        </option>`
+      ).join("");
+    select.onchange = (e) => {
+      strategy.metrics[idx] = e.target.value;
+      renderStrategyEditor();
+      renderPreview();
+    };
+    // 삭제 버튼
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "✖️";
+    delBtn.className = "text-red-500 hover:text-red-700 font-bold text-lg px-1";
+    delBtn.onclick = (e) => {
+      e.preventDefault();
+      strategy.metrics.splice(idx, 1);
+      renderStrategyEditor();
+      renderPreview();
+    };
+    metricRow.appendChild(select);
+    metricRow.appendChild(delBtn);
+    metricBox.appendChild(metricRow);
+  });
+
+  // "Add Metric" 버튼
+  const addBtn = document.createElement("button");
+  addBtn.className = "mt-1 bg-blue-600 text-white px-3 py-1 rounded font-semibold hover:bg-blue-700";
+  addBtn.textContent = "+ Add Metric";
+  addBtn.onclick = (e) => {
+    e.preventDefault();
+    // 아직 선택하지 않은 metric만 추가 (중복 방지)
+    const available = (appData.metrics || []).map(m=>m.key).filter(k=>!strategy.metrics.includes(k));
+    if (available.length > 0) {
+      strategy.metrics.push(available[0]);
+      renderStrategyEditor();
+      renderPreview();
+    }
+  };
+  metricBox.appendChild(addBtn);
+
+  wrapper.appendChild(metricBox);
+
+  // ... 이 아래로 기존 variants, override 등 코드 이어서!
+}
+
 
   const divider = document.createElement("hr");
   if (strategy.type === "rule")
@@ -2551,6 +2863,259 @@ function renderDeviceFeatureDetailPanel() {
   // 통합 렌더링
   panel.innerHTML = envFilterHtml + deviceInfoHtml + previewHtml;
 }
+
+function showStrategyResultModal(strat) {
+  let modal = document.getElementById("strategyResultModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "strategyResultModal";
+    modal.className = "fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50";
+    modal.innerHTML = `
+      <div class="bg-white p-7 rounded-2xl shadow-xl w-full max-w-2xl text-left relative" style="max-height:95vh; overflow-y:auto;">
+        <button onclick="closeStrategyResultModal()" class="absolute top-2 right-4 text-2xl text-gray-400 hover:text-red-600 font-bold">✖️</button>
+        <h2 class="text-xl font-bold mb-2">Strategy Result</h2>
+        <div class="modal-body"></div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  // W-4~W0~W+4 (총 9주)
+  const weekPast = 4, weekTest = 4, weekAfter = 4;
+  const timelineLabels = [];
+  for (let w = -weekPast; w <= weekAfter; ++w) {
+    if (w === 0) timelineLabels.push("W0");
+    else if (w > 0) timelineLabels.push(`W+${w}`);
+    else timelineLabels.push(`W${w}`);
+  }
+
+  let metrics = strat.metrics || [];
+  let metricList = metrics.map(key => {
+    let m = (appData.metrics||[]).find(m=>m.key===key);
+    return m ? `${m.displayName} (${m.unit})` : key;
+  }).join(", ");
+
+  let variantNames;
+  if (strat.type === "canary") {
+    const rollout = typeof strat.rollout === "number" ? strat.rollout : 10;
+    variantNames = [
+      `Canary (${rollout}%)`,
+      `Base (${100 - rollout}%)`
+    ];
+  } else if (strat.type === "experiment") {
+    variantNames = (strat.variants || []).map(v=>v.name);
+  } else {
+    variantNames = ["Group"];
+  }
+
+  const baseColors = ["#3b82f6", "#f59e42", "#10b981", "#f43f5e"];
+
+  // metric 분리
+  let percentMetrics = [], numberMetrics = [], isPercentMetric = {};
+  metrics.forEach(key => {
+    let m = (appData.metrics||[]).find(m=>m.key===key);
+    if (m && /(%|percent|per)/i.test(m.unit)) {
+      percentMetrics.push(key); isPercentMetric[key] = true;
+    } else {
+      numberMetrics.push(key); isPercentMetric[key] = false;
+    }
+  });
+
+  // 데이터 생성
+  const timelineData = {}, barData = {}, sumPerMetric = {};
+  // 집계범위 W1~W4 정확히 잡기
+  const w1idx = timelineLabels.indexOf("W+1");
+  const w4idx = timelineLabels.indexOf("W+4");
+
+  metrics.forEach((key, mIdx) => {
+    let isPercent = isPercentMetric[key];
+    timelineData[key] = [];
+    barData[key] = [];
+    sumPerMetric[key] = [];
+    variantNames.forEach((label, vIdx) => {
+      // W-4~W+4(9주) 랜덤
+      let timelineArr = [];
+      for (let i = 0; i < timelineLabels.length; ++i) {
+        timelineArr.push(
+          isPercent ? Number((Math.random() * 100).toFixed(1)) : Math.floor(Math.random() * 900) + 100
+        );
+      }
+      timelineData[key][vIdx] = timelineArr;
+      // W+1~W+4 구간만 정확히 잡아 집계 (label상 W+1~W+4가 실제 실험기간)
+      let periodVals = timelineArr.slice(w1idx, w4idx+1); // slice는 끝+1까지
+      if (isPercent) {
+        let avg = periodVals.length ? Number((periodVals.reduce((a, b) => a + b, 0) / periodVals.length).toFixed(1)) : 0;
+        barData[key][vIdx] = [avg];
+        sumPerMetric[key][vIdx] = avg;
+      } else {
+        let sum = periodVals.length ? periodVals.reduce((a, b) => a + b, 0) : 0;
+        barData[key][vIdx] = [sum];
+        sumPerMetric[key][vIdx] = sum;
+      }
+    });
+  });
+
+  // modal-body
+  let tableHeader = metrics.map(key => {
+    let m = (appData.metrics||[]).find(m=>m.key===key);
+    return `<th class="border px-2 py-1">${m ? m.displayName : key}</th>`;
+  }).join("");
+  let tableRows = variantNames.map((label, vIdx) => `
+    <tr>
+      <td class="border px-2 py-1 font-bold">${label}</td>
+      ${metrics.map((key, mIdx)=>{
+        let m = (appData.metrics||[]).find(m=>m.key===key);
+        let val = sumPerMetric[key][vIdx];
+        return `<td class="border px-2 py-1">${val}${isPercentMetric[key] ? " %" : (m ? " "+m.unit : "")}</td>`;
+      }).join("")}
+    </tr>
+  `).join("");
+
+  modal.querySelector(".modal-body").innerHTML = `
+    <div class="mb-2"><b>Metrics:</b> ${metricList}</div>
+    <table class="w-full text-sm border mb-4">
+      <thead><tr><th class="border px-2 py-1">Group</th>${tableHeader}</tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+    <div class="mt-3">
+      ${numberMetrics.length > 0 ? `
+      <div class="mb-2 font-semibold">Number Metrics</div>
+      <div style="width:600px; max-width:100%; margin:0 auto 32px auto;">
+        <canvas id="resultChart_number" width="600" height="200"></canvas>
+      </div>` : ""}
+      ${percentMetrics.length > 0 ? `
+      <div class="mb-2 font-semibold">Percent Metrics (%)</div>
+      <div style="width:600px; max-width:100%; margin:0 auto 32px auto;">
+        <canvas id="resultChart_percent" width="600" height="200"></canvas>
+      </div>` : ""}
+      <div style="overflow-y:auto; max-height:450px; width:100%; padding:0 4px;">
+        <div style="display:flex; flex-direction:column; gap:32px; align-items:center;">
+          ${metrics.map((key, mIdx) => `
+            <div>
+              <div class="font-semibold text-sm mb-2" style="margin-left:8px;">
+                ${(appData.metrics||[]).find(m=>m.key===key)?.displayName || key}
+              </div>
+              <canvas id="timelineChart_${mIdx}" width="600" height="200"></canvas>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+  modal.classList.remove("hidden");
+
+  // ---- 막대그래프(수치형) ----
+  if (numberMetrics.length > 0) {
+    if (window._resultChart_number) window._resultChart_number.destroy();
+    const ctx = document.getElementById('resultChart_number').getContext('2d');
+    const barDatasetsNum = numberMetrics.map((key, mIdx) => ({
+      label: (appData.metrics||[]).find(m=>m.key===key)?.displayName || key,
+      data: variantNames.map((label, vIdx) => barData[key][vIdx][0]),
+      backgroundColor: baseColors[mIdx % baseColors.length],
+      borderWidth: 1
+    }));
+    window._resultChart_number = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: variantNames, datasets: barDatasetsNum },
+      options: {
+        maintainAspectRatio: false,
+        responsive: false,
+        plugins: { legend: { display: true }},
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 100 } } }
+      }
+    });
+  }
+
+  // ---- 막대그래프(퍼센트형) ----
+  if (percentMetrics.length > 0) {
+    if (window._resultChart_percent) window._resultChart_percent.destroy();
+    const ctx = document.getElementById('resultChart_percent').getContext('2d');
+    const barDatasetsPct = percentMetrics.map((key, mIdx) => ({
+      label: (appData.metrics||[]).find(m=>m.key===key)?.displayName || key,
+      data: variantNames.map((label, vIdx) => barData[key][vIdx][0]),
+      backgroundColor: baseColors[mIdx % baseColors.length],
+      borderWidth: 1
+    }));
+    window._resultChart_percent = new Chart(ctx, {
+      type: 'bar',
+      data: { labels: variantNames, datasets: barDatasetsPct },
+      options: {
+        maintainAspectRatio: false,
+        responsive: false,
+        plugins: { legend: { display: true }},
+        scales: { y: { beginAtZero: true, max: 100, ticks: { stepSize: 10 } } }
+      }
+    });
+  }
+
+  // ---- 라인 차트(W-4~W+4): Zoom/팬 + W0(START) annotation 플러그인 적용!
+  metrics.forEach((key, mIdx) => {
+    if (window['_timelineChart'+mIdx]) window['_timelineChart'+mIdx].destroy();
+    const tctx = document.getElementById('timelineChart_'+mIdx).getContext('2d');
+    const timelineDatasets = variantNames.map((label, vIdx) => ({
+      label: label,
+      data: timelineData[key][vIdx],
+      borderWidth: 2,
+      borderColor: baseColors[vIdx % baseColors.length],
+      backgroundColor: "transparent",
+      fill: false,
+      tension: 0.3,
+      pointRadius: 2
+    }));
+    window['_timelineChart'+mIdx] = new Chart(tctx, {
+      type: 'line',
+      data: {
+        labels: timelineLabels,
+        datasets: timelineDatasets
+      },
+      options: {
+        maintainAspectRatio: false,
+        responsive: false,
+        plugins: {
+          legend: { display: true },
+          zoom: {
+            pan: { enabled: true, mode: 'x' },
+            zoom: {
+              wheel: { enabled: true },
+              pinch: { enabled: true },
+              mode: 'x'
+            }
+          },
+          annotation: {
+            annotations: {
+              w0line: {
+                type: 'line',
+                scaleID: 'x',
+                value: 'W0',
+                borderColor: 'red',
+                borderWidth: 2,
+                borderDash: [8, 4],
+                label: {
+                  enabled: true,
+                  content: 'START',
+                  color: 'red',
+                  position: 'start',
+                  backgroundColor: 'rgba(255,255,255,0.8)'
+                }
+              }
+            }
+          }
+        },
+        scales: { 
+          y: isPercentMetric[key]
+            ? { beginAtZero: true, max: 100, ticks: { stepSize: 10 } }
+            : { beginAtZero: true, ticks: { stepSize: 100 } }
+        }
+      }
+    });
+  });
+}
+
+function closeStrategyResultModal() {
+  const modal = document.getElementById("strategyResultModal");
+  if (modal) modal.classList.add("hidden");
+}
+
 
 
 
