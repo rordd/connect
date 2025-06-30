@@ -4,16 +4,16 @@
   <meta charset="utf-8"/>
   <title>webOS Connect - Preview 구현 버전</title>
   <script src="https://cdn.tailwindcss.com"></script>
-
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,500,700&display=swap">
 <style>
 input, select, textarea {
   border: 1.5px solid #999 !important;
   color: #111111 !important;
-  font-weight: 550 !important;
+  font-weight: 500 !important;
   font-size: 15px !important;
 }
 select option {
-  font-weight: 550 !important;
+  font-weight: 500 !important;
   color: #1a2238 !important;
   font-size: 15px !important;
 }
@@ -31,6 +31,25 @@ body {
   color: #222;
 }
 </style>
+<style>
+  body, #main-content {
+    font-family: 'Inter', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Segoe UI', 'Roboto', Arial, sans-serif !important;
+    font-size: 15px;
+    letter-spacing: -0.02em;
+    color: #222;
+  }
+  .font-bold { font-weight: 700 !important; }
+  .text-xl   { font-size: 1.35rem !important; }
+  .text-2xl  { font-size: 1.7rem !important; }
+  .text-base { font-size: 1.05rem !important; }
+  input, select, textarea, button {
+    font-family: inherit !important;
+    font-size: inherit !important;
+  }
+</style>
+
+
+
 </head>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -182,6 +201,111 @@ let currentEnv = "production"; // 기본 환경
 const environmentNames = ["development", "staging", "production"];
 
 const appData = {
+    
+    users: [
+  { id: "user01", name: "Alice",   country: "KR", age: 36, gender: "F", deviceIds: ["oled24","nano24"], lastLoginDate: "2025-06-20", watchTime: 237, mainService: "netflix" },
+  { id: "user02", name: "Bob",     country: "US", age: 24, gender: "M", deviceIds: ["oled24-gaming"], lastLoginDate: "2025-06-12", watchTime: 300, mainService: "youtube" },
+  { id: "user03", name: "Carol",   country: "JP", age: 29, gender: "F", deviceIds: ["nano24","oled25"], lastLoginDate: "2025-05-27", watchTime: 190, mainService: "tv" },
+  { id: "user04", name: "Dan",     country: "KR", age: 42, gender: "M", deviceIds: ["oled24-starwars","oled24"], lastLoginDate: "2025-06-15", watchTime: 330, mainService: "netflix" },
+  { id: "user05", name: "Erin",    country: "US", age: 33, gender: "F", deviceIds: ["qn25"], lastLoginDate: "2025-06-10", watchTime: 108, mainService: "input" },
+  { id: "user06", name: "Frank",   country: "DE", age: 19, gender: "M", deviceIds: ["oled25","oled24-gaming"], lastLoginDate: "2025-06-13", watchTime: 55, mainService: "tv" },
+  { id: "user07", name: "Gina",    country: "KR", age: 27, gender: "F", deviceIds: ["nano24"], lastLoginDate: "2025-06-19", watchTime: 250, mainService: "youtube" },
+  { id: "user08", name: "Hank",    country: "JP", age: 31, gender: "M", deviceIds: ["oled26","oled24"], lastLoginDate: "2025-06-17", watchTime: 212, mainService: "tv" },
+  { id: "user09", name: "Ivy",     country: "US", age: 40, gender: "F", deviceIds: ["oled25-senior","oled24"], lastLoginDate: "2025-06-01", watchTime: 411, mainService: "input" },
+  { id: "user10", name: "John",    country: "KR", age: 38, gender: "M", deviceIds: ["oled24-starwars"], lastLoginDate: "2025-05-30", watchTime: 197, mainService: "tv" },
+  { id: "user11", name: "Karen",   country: "KR", age: 26, gender: "F", deviceIds: ["qn26","nano24"], lastLoginDate: "2025-06-08", watchTime: 129, mainService: "youtube" },
+  { id: "user12", name: "Leo",     country: "DE", age: 23, gender: "M", deviceIds: ["oled25","oled24","oled26"], lastLoginDate: "2025-06-11", watchTime: 301, mainService: "netflix" },
+  { id: "user13", name: "Maya",    country: "VN", age: 34, gender: "F", deviceIds: ["oled25-senior"], lastLoginDate: "2025-06-19", watchTime: 74, mainService: "input" },
+  { id: "user14", name: "Nick",    country: "KR", age: 21, gender: "M", deviceIds: ["oled25","oled25-senior"], lastLoginDate: "2025-06-16", watchTime: 63, mainService: "tv" },
+  { id: "user15", name: "Olga",    country: "TH", age: 37, gender: "F", deviceIds: ["oled24-gaming"], lastLoginDate: "2025-06-10", watchTime: 200, mainService: "youtube" },
+  { id: "user16", name: "Paul",    country: "KR", age: 45, gender: "M", deviceIds: ["oled24","oled24-starwars","nano24"], lastLoginDate: "2025-06-20", watchTime: 375, mainService: "netflix" },
+  { id: "user17", name: "Quinn",   country: "KR", age: 34, gender: "M", deviceIds: ["oled26"], lastLoginDate: "2025-06-06", watchTime: 207, mainService: "tv" },
+  { id: "user18", name: "Rita",    country: "US", age: 32, gender: "F", deviceIds: ["qn26","qn25"], lastLoginDate: "2025-06-13", watchTime: 91, mainService: "input" },
+  { id: "user19", name: "Sam",     country: "DE", age: 30, gender: "M", deviceIds: ["oled24-gaming","oled25"], lastLoginDate: "2025-06-18", watchTime: 158, mainService: "tv" },
+  { id: "user20", name: "Tina",    country: "JP", age: 27, gender: "F", deviceIds: ["nano24","oled24"], lastLoginDate: "2025-06-15", watchTime: 244, mainService: "netflix" },
+  { id: "user21", name: "Uma",     country: "KR", age: 32, gender: "F", deviceIds: ["oled24-starwars"], lastLoginDate: "2025-06-11", watchTime: 182, mainService: "tv" },
+  { id: "user22", name: "Vince",   country: "US", age: 28, gender: "M", deviceIds: ["oled26","qn25","oled25-senior"], lastLoginDate: "2025-06-07", watchTime: 112, mainService: "youtube" },
+  { id: "user23", name: "Will",    country: "KR", age: 29, gender: "M", deviceIds: ["oled25","nano24"], lastLoginDate: "2025-06-09", watchTime: 191, mainService: "netflix" },
+  { id: "user24", name: "Xena",    country: "KR", age: 41, gender: "F", deviceIds: ["oled24-gaming"], lastLoginDate: "2025-06-14", watchTime: 119, mainService: "tv" },
+  { id: "user25", name: "Yuri",    country: "VN", age: 25, gender: "F", deviceIds: ["oled24","oled25","qn26"], lastLoginDate: "2025-06-19", watchTime: 86, mainService: "netflix" },
+  { id: "user26", name: "Zane",    country: "TH", age: 31, gender: "M", deviceIds: ["oled24-starwars","oled25-senior"], lastLoginDate: "2025-06-12", watchTime: 277, mainService: "input" },
+  { id: "user27", name: "Amy",     country: "US", age: 24, gender: "F", deviceIds: ["nano24","oled24"], lastLoginDate: "2025-06-13", watchTime: 73, mainService: "tv" },
+  { id: "user28", name: "Bill",    country: "KR", age: 39, gender: "M", deviceIds: ["qn25"], lastLoginDate: "2025-06-14", watchTime: 201, mainService: "youtube" },
+  { id: "user29", name: "Clara",   country: "KR", age: 27, gender: "F", deviceIds: ["oled25","oled24"], lastLoginDate: "2025-06-19", watchTime: 177, mainService: "netflix" },
+  { id: "user30", name: "Dylan",   country: "US", age: 36, gender: "M", deviceIds: ["oled26","nano24"], lastLoginDate: "2025-06-12", watchTime: 322, mainService: "tv" },
+  { id: "user31", name: "Ella",    country: "KR", age: 29, gender: "F", deviceIds: ["oled25","oled25-senior"], lastLoginDate: "2025-06-17", watchTime: 90, mainService: "tv" },
+  { id: "user32", name: "Felix",   country: "JP", age: 31, gender: "M", deviceIds: ["oled24","qn26"], lastLoginDate: "2025-06-09", watchTime: 135, mainService: "input" },
+  { id: "user33", name: "Grace",   country: "KR", age: 33, gender: "F", deviceIds: ["oled24-gaming","nano24"], lastLoginDate: "2025-06-15", watchTime: 207, mainService: "youtube" },
+  { id: "user34", name: "Harry",   country: "DE", age: 41, gender: "M", deviceIds: ["oled24-starwars"], lastLoginDate: "2025-06-16", watchTime: 151, mainService: "tv" },
+  { id: "user35", name: "Irene",   country: "KR", age: 28, gender: "F", deviceIds: ["oled24","oled26","oled25"], lastLoginDate: "2025-06-12", watchTime: 364, mainService: "netflix" },
+  { id: "user36", name: "Jack",    country: "KR", age: 36, gender: "M", deviceIds: ["qn26"], lastLoginDate: "2025-06-15", watchTime: 239, mainService: "tv" },
+  { id: "user37", name: "Kate",    country: "VN", age: 23, gender: "F", deviceIds: ["oled25","oled24-gaming"], lastLoginDate: "2025-06-18", watchTime: 102, mainService: "netflix" },
+  { id: "user38", name: "Liam",    country: "KR", age: 35, gender: "M", deviceIds: ["oled24","nano24"], lastLoginDate: "2025-06-20", watchTime: 221, mainService: "youtube" },
+  { id: "user39", name: "Mia",     country: "TH", age: 30, gender: "F", deviceIds: ["oled26"], lastLoginDate: "2025-06-08", watchTime: 116, mainService: "tv" },
+  { id: "user40", name: "Noah",    country: "KR", age: 41, gender: "M", deviceIds: ["oled25-senior","nano24"], lastLoginDate: "2025-06-14", watchTime: 259, mainService: "input" },
+  { id: "user41", name: "Oliver",  country: "US", age: 27, gender: "M", deviceIds: ["oled25"], lastLoginDate: "2025-03-17", watchTime: 189, mainService: "netflix" },
+  { id: "user42", name: "Penny",   country: "KR", age: 34, gender: "F", deviceIds: ["oled24","oled26"], lastLoginDate: "2025-02-12", watchTime: 225, mainService: "tv" },
+  { id: "user43", name: "Quincy",  country: "KR", age: 24, gender: "M", deviceIds: ["nano24"], lastLoginDate: "2025-06-09", watchTime: 132, mainService: "youtube" },
+  { id: "user44", name: "Rose",    country: "VN", age: 39, gender: "F", deviceIds: ["oled24-starwars","oled25"], lastLoginDate: "2025-06-16", watchTime: 161, mainService: "tv" },
+  { id: "user45", name: "Steve",   country: "KR", age: 25, gender: "M", deviceIds: ["qn25","oled24"], lastLoginDate: "2025-01-11", watchTime: 185, mainService: "netflix" },
+  { id: "user46", name: "Toby",    country: "KR", age: 38, gender: "M", deviceIds: ["oled25"], lastLoginDate: "2025-06-18", watchTime: 118, mainService: "input" },
+  { id: "user47", name: "Uma2",    country: "DE", age: 37, gender: "F", deviceIds: ["oled26","nano24"], lastLoginDate: "2025-06-10", watchTime: 271, mainService: "youtube" },
+  { id: "user48", name: "Victor",  country: "KR", age: 29, gender: "M", deviceIds: ["oled24","oled25"], lastLoginDate: "2025-02-15", watchTime: 146, mainService: "tv" },
+  { id: "user49", name: "Wendy",   country: "JP", age: 28, gender: "F", deviceIds: ["oled24-gaming"], lastLoginDate: "2025-05-20", watchTime: 182, mainService: "netflix" },
+  { id: "user50", name: "Yuna",    country: "KR", age: 35, gender: "F", deviceIds: ["oled25","nano24"], lastLoginDate: "2025-05-19", watchTime: 153, mainService: "tv" }
+],
+segments: [
+    
+{
+    id: "netflix_poweruser",
+    name: "Netflix Power Users",
+    description: "넷플릭스를 주로 사용하는 한달 누적 시청 200시간 이상 유저",
+    conditions: [
+      { field: "user.mainService", op: "=", value: "netflix" },
+      { field: "user.watchTime", op: ">", value: 200 }
+    ]
+  },
+  
+  {
+    id: "power_input_user",
+    name: "Input Power Users",
+    description: "입력모드 주로 사용하는 한달 누적 시청 200시간 이상 유저",
+    conditions: [
+      { field: "user.mainService", op: "=", value: "input" },
+      { field: "user.watchTime", op: ">", value: 200 }
+    ]
+  },
+  {
+    id: "power_tv_user",
+    name: "Live TV Power Users",
+    description: "주 사용 기능이 TV이며 한달 누적 시청 200시간 이상 유저",
+    conditions: [
+      { field: "user.mainService", op: "=", value: "tv" },
+      { field: "user.watchTime", op: ">", value: 200 }
+    ]
+  },
+    
+
+
+  {
+    id: "inactive_recent",
+    name: "Inactive Recent",
+    description: "최근 30일간 로그인하지 않은 유저",
+    conditions: [
+      { field: "user.lastLoginDate", op: "<", value: "2025-05-20" }
+    ]
+  },
+
+  {
+    id: "oled26_users",
+    name: "OLED26 Model Users",
+    description: "2026년형 OLED 모델을 사용하는 유저",
+    conditions: [
+      { field: "user.deviceIds", op: "in", value: ["oled26"] }
+    ]
+  },
+],
+    
     metrics: [
   // User/Behavior
   {
@@ -636,8 +760,10 @@ deviceSchema : {
 
 
   platforms: [
-    { id: "25", version: "webOS 25", deviceGroups: ["O22-2024", "k8lp-2024", "O24-2025", "K24-2025"] },
-    { id: "26", version: "webOS 26", deviceGroups: ["O22-2024", "k8lp-2024", "O24-2025", "K24-2025", "O26-2026", "K26-2026"] }
+
+    { id: "26", version: "webOS 26", deviceGroups: ["O22-2024", "k8lp-2024", "O24-2025", "K24-2025", "O26-2026", "K26-2026"] },
+    
+    { id: "25", version: "webOS 25", deviceGroups: ["O22-2024", "k8lp-2024", "O24-2025", "K24-2025"] }
   ],
   deviceGroups: [
     { id: "O22-2024", name: "2024 OLED", machine: "O22", manufactureYear: "2024", devices: ["oled24", "oled24-gaming", "oled24-starwars"] },
@@ -666,6 +792,7 @@ const filterFields = [
   { key: "deviceGroup.name", title: "Device Group", path: "deviceGroups", field: "name" },
   { key: "device.name", title: "Device", path: "devices", field: "name" },
   { key: "country", title: "Country", path: "countryData" },
+  { key: "segment", title: "Segment", path: "segments", field: "name" },
   { key: "deviceGroup.manufactureYear", title: "Manufacture Year", path: "deviceGroups", field: "manufactureYear" },
   { key: "deviceGroup.machine", title: "Machine", path: "deviceGroups", field: "machine" },
   { key: "device.memory", title: "Memory", path: "devices", field: "memory" },
@@ -677,7 +804,8 @@ let currentFilters = {
   "platform.version": undefined,
   "deviceGroup.name": undefined,
   "device.name": undefined,
-  "country": undefined
+  "country": undefined,
+  "segment" : undefined
 };
 let selectedFeatureId = null;
 let defaultSettingsOpen = true;
@@ -1000,7 +1128,7 @@ function renderPreview() {
   } else if (result.type === "rule") {
     previewDiv.innerHTML = `
       <div class="mb-2">
-        <span class="font-semibold text-blue-600">🎯 Rule Strategy Applie : ${result.strat.customLabel || "Rule"}</span>
+        <span class="font-semibold text-blue-600">🎯 Rule Strategy Applied : ${result.strat.customLabel || "Rule"}</span>
         <div class="text-gray-500 text-xs mb-1">Conditions: ${result.strat.conditions.map(c => `${c.field} ${c.op} ${c.value}`).join(", ")}</div>
       </div>
 
@@ -1057,7 +1185,7 @@ function renderPreview() {
   }
     previewDiv.innerHTML = `
       <div class="mb-2">
-        <span class="font-semibold text-yellow-600">🐤 Canary Strategy Applie: ${strat.customLabel || "Canary"}</span>
+        <span class="font-semibold text-yellow-600">🐤 Canary Strategy Applied: ${strat.customLabel || "Canary"}</span>
         <div class="text-gray-500 text-xs mb-1">Conditions: ${strat.conditions.map(c => `${c.field} ${c.op} ${c.value}`).join(", ")}</div>
         <div class="text-base text-yellow-800 font-bold mb-2">Rollout: ${strat.rollout}%</div>
 
@@ -1075,7 +1203,7 @@ ${renderPrettyObject(strat.value)}
     const btnDiv = document.createElement("div");
     btnDiv.className = "mt-5 flex justify-start"; // 좌측 정렬
     const btn = document.createElement("button");
-    btn.className = "bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-semibold shadow";
+    btn.className = "bg-blue-600 text-base hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-semibold shadow";
     btn.textContent = "Show Result";
     btn.onclick = function() {
       showStrategyResultModal(result.strat);
@@ -1517,6 +1645,9 @@ function navigate(view) {
   renderMain();
   highlightNav(view);
 }
+
+
+
 function renderMain() {
   const container = document.getElementById('main-content');
   if (!container) return;
@@ -1540,7 +1671,9 @@ function renderMain() {
     renderDeviceFeatureListPanel();
     renderDeviceFeatureDetailPanel();
   }
-  
+  else if (currentView === 'segments') {
+  renderSegmentView();
+}
   else {
     const name = currentView.charAt(0).toUpperCase() + currentView.slice(1);
     container.innerHTML = `
@@ -1552,6 +1685,336 @@ function renderMain() {
   }
 }
 
+function renderSegmentView() {
+  const container = document.getElementById('main-content');
+  container.innerHTML = `
+    <div class="flex flex-1 h-[calc(100vh-6rem)] divide-x divide-gray-300">
+      <!-- 좌: 세그먼트 리스트 -->
+      <section class="w-1/3 p-6 overflow-y-auto bg-white">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold leading-none mb-0">Segments</h2>
+          <button id="add-segment-btn" class="px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-900 text-base">+ Add</button>
+        </div>
+        <input id="segment-search" type="text" placeholder="Search segments..." class="mb-4 px-3 py-2 border border-gray-300 rounded-lg text-base bg-gray-100 focus:outline-none focus:border-blue-400 w-full" />
+        <div class="space-y-3" id="segment-list"></div>
+      </section>
+      <!-- 우: 세그 상세 -->
+      <section class="flex-1 p-6 overflow-y-auto bg-white" id="segment-detail-panel"></section>
+    </div>
+  `;
+
+  // 상태 변수 (클로저)
+  let selectedSegmentId = null;
+
+  function renderSegmentList() {
+    const listDiv = document.getElementById("segment-list");
+    const q = (document.getElementById("segment-search")?.value || "").trim().toLowerCase();
+    let segments = appData.segments;
+    if (q) segments = segments.filter(s => s.name.toLowerCase().includes(q) || s.description.toLowerCase().includes(q));
+    listDiv.innerHTML = "";
+    segments.forEach(seg => {
+      const card = document.createElement("div");
+      card.className = "rounded-2xl border px-4 py-3 shadow hover:shadow-xl cursor-pointer transition " +
+        (seg.id === selectedSegmentId ? "border-blue-500 ring-2 ring-blue-300 bg-blue-50" : "border-gray-300 bg-white");
+      card.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div class="font-bold text-base">${seg.name}</div>
+          <button class="text-gray-400 hover:text-red-500" title="Delete" data-seg-id="${seg.id}">❌</button>
+        </div>
+        <div class="text-xs text-gray-500 mt-1">${seg.description}</div>
+        <div class="mt-2 text-xs">
+          ${seg.conditions.map(c => `<span class="inline-block bg-gray-100 text-gray-600 rounded px-2 py-0.5 mr-1">${c.field} ${c.op} ${Array.isArray(c.value) ? c.value.join(',') : c.value}</span>`).join("")}
+        </div>
+      `;
+      card.onclick = () => {
+        selectedSegmentId = seg.id;
+        renderSegmentList();
+        renderSegmentDetail();
+      };
+      // 카드 안 삭제 버튼 이벤트 위임
+      card.querySelector("button[data-seg-id]").onclick = function(e) {
+        e.stopPropagation();
+        deleteSegment(seg.id);
+      };
+      listDiv.appendChild(card);
+    });
+  }
+
+  function renderSegmentDetail() {
+  const panel = document.getElementById("segment-detail-panel");
+  if (!selectedSegmentId) {
+    panel.innerHTML = `<div class="text-gray-400 p-8 text-center">No segment selected.</div>`;
+    return;
+  }
+  const seg = appData.segments.find(s => s.id === selectedSegmentId);
+  if (!seg) {
+    panel.innerHTML = `<div class="text-red-400 p-8 text-center">Segment not found.</div>`;
+    return;
+  }
+
+  // 인라인 편집 상태 관리
+  seg._editingName = !!seg._editingName;
+  seg._editingDesc = !!seg._editingDesc;
+
+  // 1. 유저 필드만 드롭다운에 노출
+  const userFields = Object.keys(appData.users[0] || {})
+    .filter(k => k !== "id" && k !== "name")
+    .map(k => ({
+      key: "user." + k,
+      title: "User " + k.charAt(0).toUpperCase() + k.slice(1)
+    }));
+
+  // 2. 각 유저 필드별 enum 값 자동 추출
+  const userFieldEnumMap = {};
+  userFields.forEach(f => {
+    const vals = Array.from(new Set(
+      appData.users.map(u => u[f.key.replace("user.", "")])
+    )).filter(v => v !== undefined && v !== null);
+    if (vals.length > 1 && vals.length <= 10) {
+      userFieldEnumMap[f.key] = vals;
+    }
+  });
+
+  panel.innerHTML = `
+    <div class="mb-4">
+      <div class="flex items-center gap-2 mb-2">
+        ${
+          seg._editingName
+            ? `<input id="seg-name-input" class="border rounded px-2 py-1 text-xl font-bold w-1/2" value="${seg.name}"/>
+               <button class="text-xs text-green-700 font-semibold" id="save-name">Save</button>
+               <button class="text-xs text-gray-400 font-semibold" id="cancel-name">Cancel</button>`
+            : `<div class="text-2xl font-bold">${seg.name}</div>
+               <button class="text-gray-400 hover:text-blue-500" id="edit-name" title="Edit name">✏️</button>`
+        }
+      </div>
+      <div class="flex items-center gap-2 mb-2">
+        ${
+          seg._editingDesc
+            ? `<input id="seg-desc-input" class="border rounded px-2 py-1 text-gray-700 w-2/3" value="${seg.description || ""}"/>
+               <button class="text-xs text-green-700 font-semibold" id="save-desc">Save</button>
+               <button class="text-xs text-gray-400 font-semibold" id="cancel-desc">Cancel</button>`
+            : `<div class="text-gray-500">${seg.description || ""}</div>
+               <button class="text-gray-400 hover:text-blue-500" id="edit-desc" title="Edit description">✏️</button>`
+        }
+      </div>
+      <div class="flex flex-wrap gap-2 mb-3" id="condition-tags">
+        ${
+          seg.conditions.map((c, i) => {
+            if (!c._editing) {
+              return `
+                <span class="bg-blue-100 text-blue-700 rounded px-2 py-0.5">
+                  ${c.field} ${c.op} ${Array.isArray(c.value) ? c.value.join(',') : c.value}
+                  <button class="ml-1 text-xs text-red-600 hover:underline" data-cond-idx="${i}">x</button>
+                </span>
+              `;
+            } else {
+              const hasEnum = !!userFieldEnumMap[c.field];
+              return `
+                <span class="flex items-center gap-2 bg-yellow-50 px-2 py-0.5 rounded">
+                  <select id="cond-field-${i}" class="border rounded px-1">
+                    ${userFields.map(f =>
+                      `<option value="${f.key}" ${c.field === f.key ? "selected" : ""}>${f.title}</option>`
+                    ).join("")}
+                  </select>
+                  <select id="cond-op-${i}" class="border rounded px-1">
+                    ${["=", "!=", ">", "<", ">=", "<=", "in", "not in"].map(op =>
+                      `<option value="${op}" ${c.op === op ? "selected" : ""}>${op}</option>`
+                    ).join("")}
+                  </select>
+                  ${
+                    hasEnum
+                      ? `<select id="cond-value-${i}" class="border rounded px-1 w-24">
+                          <option value="">Select</option>
+                          ${userFieldEnumMap[c.field].map(v =>
+                            `<option value="${v}" ${c.value == v ? "selected" : ""}>${v}</option>`
+                          ).join("")}
+                        </select>`
+                      : `<input id="cond-value-${i}" class="border rounded px-1 w-24" value="${c.value !== null ? c.value : ""}"/>`
+                  }
+                  <button class="text-xs text-green-700 font-semibold" id="save-cond-${i}">Save</button>
+                  <button class="text-xs text-gray-400 font-semibold" id="cancel-cond-${i}">Cancel</button>
+                </span>
+              `;
+            }
+          }).join("")
+        }
+      </div>
+      <button class="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300" id="add-condition-btn">+ Add Condition</button>
+    </div>
+    <div class="mb-4">
+      <div class="font-bold mb-1">Users in Segment</div>
+      <div id="segment-users-list"></div>
+    </div>
+  `;
+
+  // 이름/설명 인라인 수정 이벤트
+  if (panel.querySelector("#edit-name")) panel.querySelector("#edit-name").onclick = function() {
+    seg._editingName = true; renderSegmentDetail();
+  };
+  if (panel.querySelector("#save-name")) panel.querySelector("#save-name").onclick = function() {
+    seg.name = panel.querySelector("#seg-name-input").value.trim() || seg.name;
+    seg._editingName = false; renderSegmentDetail();
+  };
+  if (panel.querySelector("#cancel-name")) panel.querySelector("#cancel-name").onclick = function() {
+    seg._editingName = false; renderSegmentDetail();
+  };
+
+  if (panel.querySelector("#edit-desc")) panel.querySelector("#edit-desc").onclick = function() {
+    seg._editingDesc = true; renderSegmentDetail();
+  };
+  if (panel.querySelector("#save-desc")) panel.querySelector("#save-desc").onclick = function() {
+    seg.description = panel.querySelector("#seg-desc-input").value.trim();
+    seg._editingDesc = false; renderSegmentDetail();
+  };
+  if (panel.querySelector("#cancel-desc")) panel.querySelector("#cancel-desc").onclick = function() {
+    seg._editingDesc = false; renderSegmentDetail();
+  };
+
+  // 조건 삭제 버튼 이벤트
+  panel.querySelectorAll("button[data-cond-idx]").forEach(btn => {
+    btn.onclick = function() {
+      deleteCondition(seg.id, parseInt(btn.dataset.condIdx, 10));
+    };
+  });
+
+  // 조건 추가 버튼
+  panel.querySelector("#add-condition-btn").onclick = function() {
+    addCondition(seg.id);
+  };
+
+  // 조건 입력줄 이벤트 (필드, 연산자, 값, Save/Cancel)
+  seg.conditions.forEach((c, i) => {
+    if (c._editing) {
+      const fieldSel = panel.querySelector(`#cond-field-${i}`);
+      const opSel = panel.querySelector(`#cond-op-${i}`);
+      const hasEnum = !!userFieldEnumMap[c.field];
+      const valInp = panel.querySelector(`#cond-value-${i}`);
+
+      fieldSel.onchange = () => {
+        c.field = fieldSel.value;
+        c.value = "";
+        renderSegmentDetail();
+      };
+      opSel.onchange = () => { c.op = opSel.value; };
+      if (hasEnum) {
+        valInp.onchange = () => { c.value = valInp.value; };
+      } else {
+        valInp.oninput = () => { c.value = valInp.value; };
+      }
+      panel.querySelector(`#save-cond-${i}`).onclick = function() {
+        if (!c.value) {
+          alert("값을 입력하세요");
+          return;
+        }
+        c._editing = false;
+        renderSegmentDetail();
+      };
+      panel.querySelector(`#cancel-cond-${i}`).onclick = function() {
+        seg.conditions.splice(i, 1);
+        renderSegmentDetail();
+      };
+    }
+  });
+
+  // 조건 적용 유저 리스트
+  const users = appData.users.filter(user => {
+    return seg.conditions.every(cond => {
+      if (cond._editing) return true; // 아직 미완료 조건은 무시
+      let val = cond.field.startsWith("user.") ? user[cond.field.replace("user.", "")] : undefined;
+      if (Array.isArray(cond.value)) {
+        if (cond.op === "in") return val && cond.value.includes(val) || (Array.isArray(val) && val.some(v => cond.value.includes(v)));
+      }
+      if (cond.op === "=") return String(val) === String(cond.value);
+      if (cond.op === "!=") return String(val) !== String(cond.value);
+      if (cond.op === ">") return Number(val) > Number(cond.value);
+      if (cond.op === ">=") return Number(val) >= Number(cond.value);
+      if (cond.op === "<") return Number(val) < Number(cond.value);
+      if (cond.op === "<=") return Number(val) <= Number(cond.value);
+      return false;
+    });
+  });
+
+  const ul = document.createElement("ul");
+  ul.className = "list-disc ml-4";
+  users.forEach(u => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="font-bold">${u.name}</span> <span class="text-xs text-gray-500">(${u.id}, ${u.country}, ${u.age}, ${u.gender})</span>`;
+    ul.appendChild(li);
+  });
+  panel.querySelector("#segment-users-list").appendChild(ul);
+}
+
+  // 세그먼트 삭제
+  function deleteSegment(id) {
+    if (confirm("정말로 삭제할까요?")) {
+      appData.segments = appData.segments.filter(s => s.id !== id);
+      if (selectedSegmentId === id) selectedSegmentId = null;
+      renderSegmentList();
+      renderSegmentDetail();
+    }
+  }
+
+  // 조건 삭제
+  function deleteCondition(segId, condIdx) {
+    const seg = appData.segments.find(s => s.id === segId);
+    if (seg) {
+      seg.conditions.splice(condIdx, 1);
+      renderSegmentDetail();
+    }
+  }
+
+  // 조건 추가
+ function addCondition(segId) {
+  const seg = appData.segments.find(s => s.id === segId);
+  if (!seg) return;
+
+  // user 필드만 드롭다운으로 노출!
+  const userFields = Object.keys(appData.users[0] || {})
+    .filter(k => k !== "id" && k !== "name")
+    .map(k => ({
+      key: "user." + k,
+      title: "User " + k.charAt(0).toUpperCase() + k.slice(1)
+    }));
+
+  // 추가 입력줄이 이미 있다면 중복추가 방지
+  if (seg.conditions.some(c => c._editing)) return;
+
+  seg.conditions.push({
+    _editing: true,
+    field: userFields[0].key,
+    op: "=",
+    value: ""
+  });
+  renderSegmentDetail();
+}
+
+  // 세그먼트 추가
+document.getElementById("add-segment-btn").onclick = function() {
+  // 1. 고유 ID/이름 자동
+  const ts = Date.now();
+  const id = "segment_" + ts;
+  const name = "New Segment";
+  const desc = "";
+  // 2. 더미 데이터로 바로 추가
+  appData.segments.unshift({
+    id,
+    name,
+    description: desc,
+    conditions: []
+  });
+  // 3. 바로 선택되게
+  selectedSegmentId = id;
+  renderSegmentList();
+  renderSegmentDetail();
+};
+
+  // 검색 연동
+  document.getElementById("segment-search").oninput = renderSegmentList;
+
+  // 최초 렌더링
+  renderSegmentList();
+  renderSegmentDetail();
+}
 
 function highlightNav(view) {
   currentView = view.toLowerCase(); // 현재 뷰 저장
@@ -1798,7 +2261,7 @@ function renderStrategyFormUI(feature, strategy) {
   const addConditionBtn = document.createElement("button");
   addConditionBtn.className = "mt-1 bg-blue-600 text-white px-3 py-1 rounded font-semibold hover:bg-blue-700";
   
-  addConditionBtn.textContent = "+Add Condition";
+  addConditionBtn.textContent = "+ Condition";
   addConditionBtn.onclick = () => {
         addConditionToStrategy(strategy);
     renderStrategyEditor();
@@ -1858,7 +2321,7 @@ if (strategy.type === "experiment" || strategy.type === "canary" ) {
   // "Add Metric" 버튼
   const addBtn = document.createElement("button");
   addBtn.className = "mt-1 bg-blue-600 text-white px-3 py-1 rounded font-semibold hover:bg-blue-700";
-  addBtn.textContent = "+ Add Metric";
+  addBtn.textContent = "+ Metric";
   addBtn.onclick = (e) => {
     e.preventDefault();
     // 아직 선택하지 않은 metric만 추가 (중복 방지)
@@ -1899,100 +2362,110 @@ if (strategy.type === "experiment" || strategy.type === "canary" ) {
     variantTitle.textContent = "Variants";
     variantTitle.className = "font-semibold text-base mb-1";
     variantBox.appendChild(variantTitle);
-    strategy.variants.forEach((variant, index) => {
-      const row = document.createElement("div");
-      row.className = "flex flex-wrap items-center gap-2 bg-white p-2 border rounded";
-      const nameInput = document.createElement("input");
-      nameInput.className = "border rounded px-2 py-1 text-base w-20";
-      nameInput.value = variant.name;
-      nameInput.oninput = (e) => { variant.name = e.target.value; };
-      const rolloutInput = document.createElement("input");
-      rolloutInput.type = "number";
-      rolloutInput.min = 0;
-      rolloutInput.max = 100;
-      rolloutInput.className = "border rounded px-2 py-1 text-base w-20";
-      rolloutInput.value = variant.rollout;
-      rolloutInput.oninput = (e) => {
-        variant.rollout = parseInt(e.target.value, 10);
-      };
-      
-      rolloutInput.onblur = (e) => {
-  variant.rollout = parseInt(e.target.value, 10);
-  renderPreview(); // ⭐ 입력에서 나올 때만 프리뷰 갱신!
-};
-      
-      
-      const valueContainer = document.createElement("div");
-      valueContainer.className = "flex flex-wrap gap-2";
-      for (const key in feature.schema.properties) {
-        const def = feature.schema.properties[key];
-        const group = document.createElement("div");
-        group.className = "flex flex-col";
-        const label = document.createElement("label");
-        label.className = "text-xs text-gray-500";
-        label.textContent = key;
-        let input;
-        if (def.enum) {
-          input = document.createElement("select");
-          input.className = "border rounded px-2 py-1 text-base";
-          def.enum.forEach(opt => {
-            const o = document.createElement("option");
-            o.value = opt;
-            o.textContent = opt;
-            if (variant.value[key] === opt) o.selected = true;
-            input.appendChild(o);
-          });
-          input.onchange = (e) => {
-           variant.value[key] = e.target.value;
-           renderPreview();
-          };
-        } else if (def.type === "boolean") {
-          input = document.createElement("select");
-          input.className = "border rounded px-2 py-1 text-base";
-          ["true", "false"].forEach(val => {
-            const o = document.createElement("option");
-            o.value = val;
-            o.textContent = val;
-            if (String(variant.value[key]) === val) o.selected = true;
-            input.appendChild(o);
-          });
-          input.onchange = (e) => {
-            variant.value[key] = (e.target.value === "true");
-            renderPreview();
-          };
-        } else {
-          input = document.createElement("input");
-          input.type = "text";
-          input.className = "border rounded px-2 py-1 text-base";
-          input.value = variant.value[key] || "";
-          input.oninput = (e) => {
-            variant.value[key] = e.target.value;
-          };
-        }
-        group.appendChild(label);
-        group.appendChild(input);
-        valueContainer.appendChild(group);
-      }
-      const nameGroup = document.createElement("div");
-      nameGroup.className = "flex flex-col";
-      const nameLabel = document.createElement("label");
-      nameLabel.className = "text-xs text-gray-500";
-      nameLabel.textContent = "Variant Name";
-      nameGroup.appendChild(nameLabel);
-      nameGroup.appendChild(nameInput);
-      const rolloutGroup = document.createElement("div");
-      rolloutGroup.className = "flex flex-col";
-      const rolloutLabel = document.createElement("label");
-      rolloutLabel.className = "text-xs text-gray-500";
-      rolloutLabel.textContent = "Rollout (%)";
-      rolloutGroup.appendChild(rolloutLabel);
-      rolloutGroup.appendChild(rolloutInput);
+    
+    
+    
+strategy.variants.forEach((variant, index) => {
+  const row = document.createElement("div");
+  
+    let bgColor = "#E6F4FF";
+  if (index === 1) bgColor = "#FFE9E6";
+  if (index > 1)  bgColor = "#F4F6FB";
+  row.style.background = bgColor;
+  
+  
+  row.className = "flex flex-wrap items-end gap-4 bg-blue-50 p-3 pl-4 border border-gray-400 mb-1 shadow";
+  // 이름
+  const nameGroup = document.createElement("div");
+  nameGroup.className = "flex flex-col mr-3 mb-1";
+  const nameLabel = document.createElement("label");
+  nameLabel.className = "text-base font-semibold text-gray-700 mb-1";
+  nameLabel.textContent = "Variant Name";
+  nameGroup.appendChild(nameLabel);
+  const nameInput = document.createElement("input");
+  nameInput.className = "w-28 border rounded px-2 py-1 text-base font-semibold";
+  nameInput.value = variant.name;
+  nameInput.oninput = (e) => { variant.name = e.target.value; };
+  nameGroup.appendChild(nameInput);
 
-      row.appendChild(nameGroup);
-      row.appendChild(rolloutGroup);
-      row.appendChild(valueContainer);
-      variantBox.appendChild(row);
-    });
+  // rollout
+  const rolloutGroup = document.createElement("div");
+  rolloutGroup.className = "flex flex-col mr-3 mb-1";
+  const rolloutLabel = document.createElement("label");
+  rolloutLabel.className = "text-base font-semibold text-gray-700 mb-1";
+  rolloutLabel.textContent = "Rollout (%)";
+  rolloutGroup.appendChild(rolloutLabel);
+  const rolloutInput = document.createElement("input");
+  rolloutInput.type = "number";
+  rolloutInput.min = 0;
+  rolloutInput.max = 100;
+  rolloutInput.className = "w-24 border rounded px-2 py-1 text-base font-semibold";
+  rolloutInput.value = variant.rollout;
+  rolloutInput.oninput = (e) => { variant.rollout = parseInt(e.target.value, 10); };
+  rolloutInput.onblur = (e) => { variant.rollout = parseInt(e.target.value, 10); renderPreview(); };
+  rolloutGroup.appendChild(rolloutInput);
+
+// 2. 가로선
+const hr = document.createElement("hr");
+hr.className = " border-t-2 border-gray-400 w-full";
+
+
+  // 값들
+  const valueContainer = document.createElement("div");
+  valueContainer.className = "flex flex-wrap gap-2";
+  for (const key in feature.schema.properties) {
+    const def = feature.schema.properties[key];
+    const group = document.createElement("div");
+    group.className = "flex flex-col mb-1";
+    const label = document.createElement("label");
+    label.className = "text-base font-semibold text-gray-700 mb-1";
+    label.textContent = key;
+    let input;
+    if (def.enum) {
+      input = document.createElement("select");
+      input.className = "w-28 border rounded px-2 py-1 text-base w-full min-w-[180px]";
+      def.enum.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt;
+        o.textContent = opt;
+        if (variant.value[key] === opt) o.selected = true;
+        input.appendChild(o);
+      });
+      input.onchange = (e) => { variant.value[key] = e.target.value; renderPreview(); };
+    } else if (def.type === "boolean") {
+      input = document.createElement("select");
+      input.className = "w-28 border rounded px-2 py-1 text-base w-full min-w-[180px]";
+      
+      
+      ["true", "false"].forEach(val => {
+        const o = document.createElement("option");
+        o.value = val;
+        o.textContent = val;
+        if (String(variant.value[key]) === val) o.selected = true;
+        input.appendChild(o);
+      });
+      input.onchange = (e) => { variant.value[key] = (e.target.value === "true"); renderPreview(); };
+    } else {
+      input = document.createElement("input");
+      input.type = "text";
+      input.className = "w-28 border rounded px-2 py-1 text-base w-full min-w-[180px]";
+      input.value = variant.value[key] || "";
+      input.oninput = (e) => { variant.value[key] = e.target.value; };
+    }
+    group.appendChild(label);
+    group.appendChild(input);
+    valueContainer.appendChild(group);
+  }
+
+  row.appendChild(nameGroup);
+  row.appendChild(rolloutGroup);
+  row.appendChild(hr);
+  row.appendChild(valueContainer);
+  variantBox.appendChild(row);
+});
+    
+    
+    
     wrapper.appendChild(variantBox);
   }
   // --- Canary: Rollout
